@@ -11,7 +11,8 @@ class App extends Component {
           <h1 className="App-title">Music Discovery</h1>
         </header>
         <p className="App-intro">
-          <code>Hello World</code>
+          <h2>Hello World</h2>
+          <a href="/login" class="btn btn-primary">Log in with Spotify</a>
         </p>
       </div>
     );
