@@ -20,8 +20,10 @@ app.get('/api/callback', auth_controller.callback);
 
 app.get('/api/refresh_token', auth_controller.refreshToken);
 
-app.get('/api/hello', app_controller.helloWorld)
+app.get('/api/hello', app_controller.helloWorld);
 
-app.get('/', app_controller.helloWorld)
+app.get('/api/redis_test', app_controller.redisTest);
+
+app.get('/', app_controller.helloWorld);
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
