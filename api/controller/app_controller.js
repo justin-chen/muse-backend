@@ -1,3 +1,3 @@
 module.exports = {
-  helloworld: (req, res) => res.send(process.env.CLIENT_SECRET)
+  helloWorld: (req, res) => res.json({ message: 'Hello World' })
 }
