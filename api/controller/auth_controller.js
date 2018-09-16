@@ -6,7 +6,6 @@ const client_id = process.env.CLIENT_ID; // Your client id
 const client_secret = process.env.CLIENT_SECRET; // Your secret
 const redirect_uri = `http://localhost:${port}/api/callback`; // Your redirect uri
 
-
 var sendAsJSON = (res, error, response, body) => {
   if (!error && response.statusCode === 200) {
     res.json(body);
@@ -77,17 +76,6 @@ module.exports = {
 
           var access_token = body.access_token,
             refresh_token = body.refresh_token;
-
-          var options = {
-            url: 'https://api.spotify.com/v1/me',
-            headers: { 'Authorization': 'Bearer ' + access_token },
-            json: true
-          };
-
-          // use the access token to access the Spotify Web API
-          request.get(options, function (error, response, body) {
-            console.log(body);
-          });
 
           // we can also pass the token to the browser to make requests from there
           res.redirect(`/u/${access_token}/${refresh_token}`);
