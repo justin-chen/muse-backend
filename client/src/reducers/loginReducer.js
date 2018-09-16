@@ -1,6 +1,12 @@
 import { STORE_TOKENS, STORE_PROFILE } from '../actions/loginActions';
 
-export default function reducer(state = {}, action) {
+const initAuth = {
+  access_token: localStorage.getItem('ACCESS_TOKEN'),
+  refresh_token: localStorage.getItem('REFRESH_TOKEN'),
+  profile: null,
+};
+
+export default function reducer(state = initAuth, action) {
   switch (action.type) {
     case STORE_TOKENS:
       return {

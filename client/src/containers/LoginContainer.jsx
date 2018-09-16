@@ -4,7 +4,7 @@ import Login from '../components/Login';
 import * as loginActions from '../actions/loginActions';
 
 const mapStateToProps = state => ({
-    profile_fetched: state.auth.profile !== undefined
+    profile_fetched: state.auth.profile !== null,
 });
 
 const mapDispatchToProps = dispatch => ({

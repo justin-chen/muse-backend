@@ -11,8 +11,7 @@ export const storeProfile = (profile) => ({
     profile,
 });
 
-export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
-    dispatch(storeTokens(accessToken, refreshToken));
+export const fetchProfile = (accessToken) => (dispatch) => {
     const url = 'http://localhost:5000/api/fetch_user';
     const options = {
         method: "POST", // *GET, POST, PUT, DELETE, etc.
@@ -34,4 +33,20 @@ export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
         .then(profile => {
             dispatch(storeProfile(profile));
         });
+};
+
+export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
+    dispatch(storeTokens(accessToken, refreshToken));
+    const url = 'http://localhost:5000/api/fetch_user';
+    const options = {
+        method: "POST", // *GET, POST, PUT, DELETE, etc.
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            access_token: accessToken
+        }),
+    };
+    return dispatch(fetchProfile(accessToken));
 };
