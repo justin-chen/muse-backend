@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import logo from '../assets/images/logo.svg';
 import Profile from './Profile';
+import flow from '../assets/gifs/flow.gif';
 import '../styles/App.css';
 
 class App extends Component {
@@ -16,15 +16,18 @@ class App extends Component {
   render() {
     const { profile } = this.props.auth;
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Music Discovery</h1>
-        </header>
+      <div className="App fullscreen-bg">
         <div className="App-intro">
+
           {profile ?
             <Profile profile={this.props.auth.profile} /> :
-            <a className="btn btn-primary" href="/api/login">Log in with Spotify</a>
+            <div className="App-header">
+              <h1>Music Discovery</h1>
+              <img src={flow} />
+              <div>
+                <input type="button" className="btn login" onClick={() => window.location.href = "/api/login"} value="Continue with Spotify" />
+              </div>
+            </div>
           }
         </div>
       </div>
