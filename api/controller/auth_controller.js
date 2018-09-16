@@ -1,6 +1,4 @@
 const querystring = require('querystring');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
 const request = require('request');
 
 const port = process.env.PORT || 5000;
@@ -32,10 +30,12 @@ var stateKey = 'spotify_auth_state';
 // Available functions
 module.exports = {
   login: (req, res) => {
+    console.log('HERE');
     var state = generateRandomString(16);
     res.cookie(stateKey, state);
 
     var scope = 'user-read-private user-read-email';
+    console.log('REDIRECTING..');
     res.redirect('https://accounts.spotify.com/authorize?' +
       querystring.stringify({
         response_type: 'code',
@@ -50,13 +50,13 @@ module.exports = {
   callback: (req, res) => {
     // your application requests refresh and access tokens
     // after checking the state parameter
-
+    console.log('CALLBACK');
     var code = req.query.code || null;
     var state = req.query.state || null;
     var storedState = req.cookies ? req.cookies[stateKey] : null;
 
     if (state === null || state !== storedState) {
-      res.status(401).json({message: 'Error: You are not authorized, please login again.'});
+      res.status(401).json({ message: 'Error: You are not authorized, please login again.' });
     } else {
       res.clearCookie(stateKey);
       var authOptions = {
@@ -72,7 +72,32 @@ module.exports = {
         json: true
       };
 
-      request.post(authOptions, (error, response, body) => sendAsJSON(res, error, response, body));
+      request.post(authOptions, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+
+          var access_token = body.access_token,
+            refresh_token = body.refresh_token;
+
+          var options = {
+            url: 'https://api.spotify.com/v1/me',
+            headers: { 'Authorization': 'Bearer ' + access_token },
+            json: true
+          };
+
+          // use the access token to access the Spotify Web API
+          request.get(options, function (error, response, body) {
+            console.log(body);
+          });
+
+          // we can also pass the token to the browser to make requests from there
+          res.redirect(`/u/${access_token}/${refresh_token}`);
+        } else {
+          res.redirect('/u/' +
+            querystring.stringify({
+              error: 'invalid_token'
+            }));
+        }
+      });
     }
   },
 
