@@ -2,8 +2,8 @@ require('dotenv').config()
 
 // Libs
 const cors = require('cors');
-const request = require('request');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 // Setup
 const express = require('express')
@@ -11,7 +11,8 @@ const app = express()
 const app_controller = require('./api/controller/app_controller');
 const auth_controller = require('./api/controller/auth_controller');
 const port = process.env.PORT || 5000;
-app.use(express.static(__dirname + '/public')).use(cors()).use(cookieParser());
+
+app.use(cors()).use(cookieParser());
 
 // Routes
 app.get('/api/login', auth_controller.login);
@@ -24,6 +25,11 @@ app.get('/api/hello', app_controller.helloWorld);
 
 app.get('/api/redis_test', app_controller.redisTest);
 
-app.get('/', app_controller.helloWorld);
+// Serve any static files
+app.use(express.static(path.join(__dirname, 'client/build')));
+// Handle React routing, return all requests to React app
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
