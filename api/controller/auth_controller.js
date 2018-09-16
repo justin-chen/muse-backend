@@ -75,7 +75,7 @@ module.exports = {
         if (!error && response.statusCode === 200) {
 
           var access_token = body.access_token,
-            refresh_token = body.refresh_token;
+          refresh_token = body.refresh_token;
 
           // we can also pass the token to the browser to make requests from there
           res.redirect(`/u/${access_token}/${refresh_token}`);

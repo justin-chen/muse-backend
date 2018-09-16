@@ -21,8 +21,11 @@ export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
         }
     };
     return fetch(url, options)
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            console.log(`Error retrieving profile: ${response.status} ${response.statusText}`);
+        })
         .then(profile => dispatch(storeProfile(profile)));
 };
-
-

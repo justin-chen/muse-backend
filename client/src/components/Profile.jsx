@@ -3,18 +3,15 @@ import React, { Component } from 'react';
 class Profile extends Component {
   constructor(props) {
     super(props);
-    const { display_name, email, images }
     this.state = {
-      display_name,
-      email,
-      image: images.url,
-    }
+      ...this.props.profile,
+    };
   }
   render() {
     return (
       <div>
         <h1>Welcome, {this.state.display_name}.</h1>
-        <img src={this.state.image} />
+        <img src={this.state.images.url} />
       </div>
     );
   }
