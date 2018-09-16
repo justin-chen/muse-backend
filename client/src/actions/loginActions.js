@@ -16,9 +16,13 @@ export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
     const url = 'http://localhost:5000/api/fetch_user';
     const options = {
         method: "POST", // *GET, POST, PUT, DELETE, etc.
-        body: {
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
             access_token: accessToken
-        }
+        }),
     };
     return fetch(url, options)
         .then(response => {
@@ -27,5 +31,7 @@ export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
             }
             console.log(`Error retrieving profile: ${response.status} ${response.statusText}`);
         })
-        .then(profile => dispatch(storeProfile(profile)));
+        .then(profile => {
+            dispatch(storeProfile(profile));
+        });
 };
