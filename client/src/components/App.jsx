@@ -14,20 +14,22 @@ class App extends Component {
   }
 
   render() {
-    const { profile } = this.props.auth;
+    const { profile, access_token, refresh_token } = this.props.auth;
     return (
       <div className="App fullscreen-bg">
         <div className="App-intro">
 
           {profile ?
             <Profile profile={this.props.auth.profile} /> :
+            !(access_token && refresh_token) ?
             <div className="App-header">
               <h1>Music Discovery</h1>
               <img src={flow} />
               <div>
                 <input type="button" className="btn login" onClick={() => window.location.href = "/api/login"} value="Continue with Spotify" />
               </div>
-            </div>
+            </div> : null
+          
           }
         </div>
       </div>
