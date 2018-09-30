@@ -12,6 +12,7 @@ const app = express()
 const app_controller = require('./api/controller/app_controller');
 const auth_controller = require('./api/controller/auth_controller');
 const user_controller = require('./api/controller/user_controller');
+const spotify_controller = require('./api/controller/spotify_controller');
 const port = process.env.PORT || 5000;
 
 app.use(bodyParser.json()); // for parsing application/json
@@ -30,6 +31,8 @@ app.post('/api/fetch_user', user_controller.getInfo);
 app.get('/api/hello', app_controller.helloWorld);
 
 app.get('/api/redis_test', app_controller.redisTest);
+
+app.get('/api/all_genres', spotify_controller.allGenres);
 
 // Serve any static files
 app.use(express.static(path.join(__dirname, 'client/build')));
