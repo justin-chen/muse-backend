@@ -56,7 +56,7 @@ var getAppToken = (callback) => {
   request.post(authOptions, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       insertToRedis('AppAuthToken', body.access_token);
-      return callback(fetchFromRedis('AppAuthToken'));
+      return callback(body.access_token);
     } else {
       return null;
     }
