@@ -13,7 +13,7 @@ class Profile extends Component {
 
   render() {
     return (
-      <div style={{color:"white"}}>
+      <div>
         <h1>{this.state.splash_message}</h1>
         <h2>{this.state.email}</h2>
         {<img src={this.state.image_url} />}
