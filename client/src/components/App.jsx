@@ -1,39 +1,20 @@
 import React, { Component } from 'react';
-import Profile from './Profile';
-import flow from '../assets/gifs/flow.gif';
-import '../styles/App.css';
+import { Redirect } from 'react-router-dom';
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-    const logged_in = Boolean(this.props.auth.access_token && this.props.auth.refresh_token);
-    const profile_fetched = Boolean(this.props.auth.profile);
-    if (logged_in && !profile_fetched) {
-      this.props.fetchProfile(this.props.auth.access_token);
+    constructor(props) {
+        super(props);
+        const { profile, access_token, refresh_token } = this.props.auth;
+        const logged_in = !!(access_token && refresh_token);
+        if (!profile && logged_in) {
+            this.props.fetchProfile(access_token);
+        }
     }
-  }
 
-  render() {
-    const { profile, access_token, refresh_token } = this.props.auth;
-    const bg = profile ? "" : " fullscreen-bg";
-    return (
-      <div className={"App" + bg}>
-        <div className="App-intro">
-          {profile ?
-            <Profile profile={this.props.auth.profile} /> :
-            (access_token && refresh_token) ? null :
-              <div className="App-header">
-                <h1>Music Discovery</h1>
-                <img src={flow} />
-                <div>
-                  <input type="button" className="btn login" onClick={() => window.location.href = "/api/login"} value="Continue with Spotify" />
-                </div>
-              </div>
-          }
-        </div>
-      </div>
-    );
-  }
+    render() {
+        const { profile } = this.props.auth;
+        return profile ? 'User' : 'Guest';
+    }
 }
 
 export default App;

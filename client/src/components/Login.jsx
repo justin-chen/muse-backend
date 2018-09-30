@@ -9,7 +9,7 @@ class Login extends Component {
     }
 
     render() {
-        return this.props.profile_fetched ? <Redirect to="/" /> : null;
+        return this.props.profile_fetched ? <Redirect to="/app" /> : null;
     }
 }
 
