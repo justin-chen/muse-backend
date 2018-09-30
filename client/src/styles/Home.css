@@ -8,44 +8,34 @@
   src: url(../assets/fonts/Myriad-Pro.ttf);
 }
 
-html, body, .App {
+html, body, .Home {
   font-family: myriadProLight;
   height: 100%
 }
 
-.App {
+.Home {
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
-}
-
-.App-header {
+.Home-header {
   padding-top: 7%;
   color: white;
 }
-.App-header h1 {
+.Home-header h1 {
   font-size: 6rem;
   color: white;
   padding-bottom: 1rem;
 }
 
-.App-header img {
+.Home-header img {
   padding-bottom: 2.5rem;
 }
-.App-title {
+.Home-title {
   font-size: 5em;
 }
 
-.App-intro {
+.Home-intro {
   font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .fullscreen-bg {
@@ -66,7 +56,9 @@ html, body, .App {
   height: 60%;
 }
 
-
+.btn.login {
+  margin: 0px 5px;
+}
 
 .login {
   font-size: 1.2rem;

@@ -5,8 +5,9 @@ import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import { composeWithDevTools } from 'redux-devtools-extension';
-import App from './containers/AppContainer';
+import Home from './containers/HomeContainer';
 import Login from './containers/LoginContainer';
+import App from './containers/AppContainer';
 import MusicDiscoveryReducer from './reducers/MusicDiscoveryReducer';
 import './styles/index.css';
 
@@ -30,7 +31,8 @@ class Root extends Component {
             <Provider store={store}>
                 <Router>
                     <Switch>
-                        <Route exact path="/" component={App} />
+                        <Route exact path="/" component={Home} />
+                        <Route path="/app" component={App} />
                         <Route path="/u/:accessToken/:refreshToken" component={Login} />
                     </Switch>
                 </Router>
