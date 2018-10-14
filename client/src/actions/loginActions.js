@@ -6,12 +6,12 @@ export const storeTokens = (accessToken, refreshToken) => ({
 });
 
 export const STORE_PROFILE = 'STORE_PROFILE';
-export const storeProfile = (profile) => ({
+export const storeProfile = profile => ({
     type: STORE_PROFILE,
     profile,
 });
 
-export const fetchProfile = (accessToken) => (dispatch) => {
+export const fetchProfile = accessToken => dispatch => {
     const url = 'http://localhost:5000/api/fetch_user';
     const options = {
         method: "POST", // *GET, POST, PUT, DELETE, etc.
@@ -35,7 +35,7 @@ export const fetchProfile = (accessToken) => (dispatch) => {
         });
 };
 
-export const authenticateUser = (accessToken, refreshToken) => (dispatch) => {
+export const authenticateUser = (accessToken, refreshToken) => dispatch => {
     dispatch(storeTokens(accessToken, refreshToken));
     dispatch(fetchProfile(accessToken));
 };

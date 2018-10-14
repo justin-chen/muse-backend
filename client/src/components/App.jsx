@@ -36,6 +36,8 @@ class App extends Component {
 
     render() {
         console.log(this.props.app);
+        if (this.props.app.genres)
+            console.log(this.props.app.genres.categories.items);
         return (
             <div className="App">
                 <h1>Hello</h1>
