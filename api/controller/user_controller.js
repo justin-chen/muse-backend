@@ -1,7 +1,7 @@
 const request = require('request');
 
-var profileFetchOptions = (accessToken) => {
-  var option = {
+const profileFetchOptions = accessToken => {
+  const option = {
     url: 'https://api.spotify.com/v1/me',
     headers: { Authorization: `Bearer ${accessToken}` },
     json: true

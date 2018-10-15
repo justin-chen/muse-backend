@@ -1,16 +1,16 @@
 // Redis
-var redis = require('redis');
-var client = redis.createClient();
+const redis = require('redis');
+const client = redis.createClient();
 
-client.on('error', (err) => {
+client.on('error', err => {
   console.log('Something went wrong ', err)
 });
 
-var insertToRedis = (key, value) => {
+const insertToRedis = (key, value) => {
   client.set(key, value, redis.print);
 }
 
-var fetchFromRedis = (key, res) => {
+const fetchFromRedis = (key, res) => {
   client.get(key, (error, result) => {
     if (error) throw error;
     console.log(result);

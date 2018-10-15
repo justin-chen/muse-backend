@@ -1,17 +1,18 @@
+const spotify_manager = require('../managers/spotify_manager');
 // Redis stuff
-var redis = require('redis');
-var client = redis.createClient();
+const redis = require('redis');
+const client = redis.createClient();
 
-client.on('error', (err) => {
+client.on('error', err => {
   console.log('Something went wrong ', err)
 });
 
-var insertToRedis = (key, value) => {
+const insertToRedis = (key, value) => {
   console.log("Inserting to redis");
   client.set(key, value);
 }
 
-var fetchFromRedis = (key, callback) => {
+const fetchFromRedis = (key, callback) => {
   client.get(key, (error, result) => {
     if (error) throw error;
     console.log("Fetching from redis");
@@ -24,7 +25,7 @@ const request = require('request');
 const client_id = process.env.CLIENT_ID; // Your client id
 const client_secret = process.env.CLIENT_SECRET; // Your secret
 
-var sendAsJSON = (res, error, response, body) => {
+const sendAsJSON = (res, error, response, body) => {
   if (!error && response.statusCode === 200) {
     res.json(body);
   } else {
@@ -32,8 +33,8 @@ var sendAsJSON = (res, error, response, body) => {
   }
 }
 
-var genreFetchOptions = (accessToken) => {
-  var option = {
+const genreFetchOptions = accessToken => {
+  const option = {
     url: 'https://api.spotify.com/v1/browse/categories?limit=50',
     headers: { Authorization: `Bearer ${accessToken}` },
     json: true
@@ -41,8 +42,8 @@ var genreFetchOptions = (accessToken) => {
   return option;
 };
 
-var getAppToken = (callback) => {
-  var authOptions = {
+const getAppToken = callback => {
+  const authOptions = {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       grant_type: 'client_credentials'
@@ -66,10 +67,11 @@ var getAppToken = (callback) => {
 // Export functions
 module.exports = {
   allGenres: (req, res) => {
-    fetchFromRedis('AppAuthToken', (token) => {
+    fetchFromRedis('AppAuthToken', token => {
       if (token) {
         request.get(genreFetchOptions(token), (error, response, body) => {
           if (!error && response.statusCode === 200) {
+            spotify_manager.filterGenres(body);
             res.json(body);
           } else if (response.statusCode === 401) {
             getAppToken(token => {

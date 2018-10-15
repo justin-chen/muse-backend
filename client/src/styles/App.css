@@ -1,0 +1,28 @@
+.App {
+    text-align: center;
+    padding: 20px;
+}
+
+input[type=checkbox] {
+    display: none;
+}
+
+table {
+    margin: 10px auto;
+}
+
+.genre {
+    position: relative;
+    width: 274px;
+    height: 274px;
+    margin: 0.4em 0.4em;
+
+}
+
+.genre span {
+    position: absolute;
+    color: white;
+    top: 70%;
+    left: 50%;
+    transform: translateX(-50%);
+}
