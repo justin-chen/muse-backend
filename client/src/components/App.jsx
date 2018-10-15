@@ -17,7 +17,14 @@ class App extends Component {
         let genresFormatted = [];
         let genreRow = [];
         const genreItems = genres.map(genre => {
-            return <img src={genre.icons[0].url} />
+            return (
+                <div className="genre">
+                    <input type="checkbox" id={genre.id} />
+                    <label for={genre.id}><img src={genre.icons[0].url} />
+                    </label>
+                    <span>{genre.name}</span>
+                </div>
+            );
         });
 
         for (let i = 0; i < genreItems.length; i++) {
@@ -25,7 +32,11 @@ class App extends Component {
                 genresFormatted.push(<tr>{genreRow}</tr>);
                 genreRow = [];
             }
-            genreRow.push(<td>{genreItems[i]}</td>);
+            genreRow.push(
+                <td>
+                    {genreItems[i]}
+                </td>
+            );
         }
 
         if (genreRow.length) {
