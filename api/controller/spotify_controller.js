@@ -35,7 +35,7 @@ const sendAsJSON = (res, error, response, body) => {
 
 const genreFetchOptions = accessToken => {
   const option = {
-    url: 'https://api.spotify.com/v1/browse/categories?limit=50',
+    url: 'https://api.spotify.com/v1/browse/categories?limit=50&country=CA',
     headers: { Authorization: `Bearer ${accessToken}` },
     json: true
   };
