@@ -18,7 +18,7 @@ export const fetchGenres = () => dispatch => {
         });
 };
 
-export const updateFavoriteGenres = genres => dispatch => {
+export const updateGenrePreferences = payload => dispatch => {
     const url = 'http://localhost:5000/api/update_genres';
     const options = {
         method: 'POST',
@@ -26,7 +26,7 @@ export const updateFavoriteGenres = genres => dispatch => {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(genres),
+        body: JSON.stringify(payload)
     }
     fetch(url, options)
 };

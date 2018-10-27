@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom';
 import '../styles/App.css';
 
 class App extends Component {
@@ -47,6 +46,19 @@ class App extends Component {
         return genresFormatted;
     }
 
+    updateGenrePreferences = () => {
+        const payload = {
+            selected_genres: [],
+        };
+        const collection = document.getElementsByClassName('genreCheckbox');
+        Array.prototype.forEach.call(collection, genre => {
+            if (genre.checked) {
+                payload.selected_genres.push(genre.id);
+            }
+        });
+        this.props.updateGenrePreferences(payload);
+    }
+
     render() {
         console.log(this.props.app);
         if (this.props.app.genres)
@@ -57,7 +69,7 @@ class App extends Component {
                 {this.props.app.genres ?
                     <div>
                         <table>{this.displayGenreSelection(this.props.app.genres.categories.items)}</table>
-                        <input type="button" className="btn" id="start" onClick={() => console.log('woopie')} value="Start" />
+                        <input type="button" className="btn" id="start" onClick={this.updateGenrePreferences} value="Start" />
                     </div>
                     : null
                 }
