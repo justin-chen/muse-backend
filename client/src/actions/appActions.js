@@ -17,3 +17,16 @@ export const fetchGenres = () => dispatch => {
             dispatch(storeGenres(genres));
         });
 };
+
+export const updateGenrePreferences = payload => dispatch => {
+    const url = 'http://localhost:5000/api/update_genres';
+    const options = {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    }
+    fetch(url, options)
+};

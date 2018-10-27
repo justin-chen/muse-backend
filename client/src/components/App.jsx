@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom';
 import '../styles/App.css';
 
 class App extends Component {
@@ -19,8 +18,10 @@ class App extends Component {
         const genreItems = genres.map(genre => {
             return (
                 <div className="genre">
-                    <input type="checkbox" id={genre.id} />
-                    <label for={genre.id}><img src={genre.icons[0].url} />
+                    <input type="checkbox" id={genre.id} className="genreCheckbox" />
+                    <label for={genre.id}>
+                        <i class="fas fa-check"></i>
+                        <img src={genre.icons[0].url} />
                     </label>
                     <span>{genre.name}</span>
                 </div>
@@ -45,15 +46,32 @@ class App extends Component {
         return genresFormatted;
     }
 
+    updateGenrePreferences = () => {
+        const payload = {
+            selected_genres: [],
+        };
+        const collection = document.getElementsByClassName('genreCheckbox');
+        Array.prototype.forEach.call(collection, genre => {
+            if (genre.checked) {
+                payload.selected_genres.push(genre.id);
+            }
+        });
+        this.props.updateGenrePreferences(payload);
+    }
+
     render() {
         console.log(this.props.app);
         if (this.props.app.genres)
             console.log(this.props.app.genres.categories.items);
         return (
             <div className="App">
-                <h1>Hello</h1>
+                <h1>Let's get this bread</h1>
                 {this.props.app.genres ?
-                    <table>{this.displayGenreSelection(this.props.app.genres.categories.items)}</table> : null
+                    <div>
+                        <table>{this.displayGenreSelection(this.props.app.genres.categories.items)}</table>
+                        <input type="button" className="btn" id="start" onClick={this.updateGenrePreferences} value="Start" />
+                    </div>
+                    : null
                 }
             </div>
         );

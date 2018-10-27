@@ -3,8 +3,14 @@
     padding: 20px;
 }
 
-input[type=checkbox] {
+.genreCheckbox {
     display: none;
+    box-sizing: border-box;
+}
+
+.genreCheckbox:checked ~ label img {
+    outline: 0.25em solid #44cf5f;
+    outline-offset: -0.25em;
 }
 
 table {
@@ -13,6 +19,7 @@ table {
 
 .genre {
     position: relative;
+    color: white;
     width: 274px;
     height: 274px;
     margin: 0.4em 0.4em;
@@ -21,8 +28,24 @@ table {
 
 .genre span {
     position: absolute;
-    color: white;
     top: 70%;
     left: 50%;
     transform: translateX(-50%);
+}
+
+.genre i {
+    display: none;
+    position: absolute;
+    font-size: 26px;
+    right: 0.5em;
+    top: 0.5em;
+}
+
+.genreCheckbox:checked ~ label i {
+    display: block;
+}
+
+#start {
+    background: #1bd75f;
+    color: white;
 }
