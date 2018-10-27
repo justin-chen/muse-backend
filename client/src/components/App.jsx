@@ -19,8 +19,10 @@ class App extends Component {
         const genreItems = genres.map(genre => {
             return (
                 <div className="genre">
-                    <input type="checkbox" id={genre.id} />
-                    <label for={genre.id}><img src={genre.icons[0].url} />
+                    <input type="checkbox" id={genre.id} className="genreCheckbox" />
+                    <label for={genre.id}>
+                        <i class="fas fa-check"></i>
+                        <img src={genre.icons[0].url} />
                     </label>
                     <span>{genre.name}</span>
                 </div>
@@ -51,9 +53,13 @@ class App extends Component {
             console.log(this.props.app.genres.categories.items);
         return (
             <div className="App">
-                <h1>Hello</h1>
+                <h1>Let's get this bread</h1>
                 {this.props.app.genres ?
-                    <table>{this.displayGenreSelection(this.props.app.genres.categories.items)}</table> : null
+                    <div>
+                        <table>{this.displayGenreSelection(this.props.app.genres.categories.items)}</table>
+                        <input type="button" className="btn" id="start" onClick={() => console.log('woopie')} value="Start" />
+                    </div>
+                    : null
                 }
             </div>
         );

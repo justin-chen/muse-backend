@@ -56,15 +56,15 @@ html, body, .Home {
   height: 60%;
 }
 
-.btn.login {
-  margin: 0px 5px;
+.btn {
+  font-size: 1.2rem;
+  color: #1bd75f;
+  border-color: #1bd75f;
 }
 
 .login {
-  font-size: 1.2rem;
+  margin: 0px 5px;
   background: transparent;
-  color: #1bd75f;
-  border-color: #1bd75f;
 }
 
 .login:hover{
