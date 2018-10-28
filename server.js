@@ -30,8 +30,6 @@ app.post('/api/fetch_user', user_controller.getInfo);
 
 app.get('/api/hello', app_controller.helloWorld);
 
-app.get('/api/redis_test', app_controller.redisTest);
-
 app.get('/api/all_genres', spotify_controller.allGenres);
 
 // Serve any static files
