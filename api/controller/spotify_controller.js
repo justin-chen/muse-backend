@@ -37,6 +37,7 @@ const fetchAppToken = (callback) => {
 
   datastore.runQuery(query).then((data) => {
     var token = data[0][0].token
+    console.log("Fetched token from datastore")
     return callback(token);
   });
 }
