@@ -50,15 +50,6 @@ const sendAsJSON = (res, error, response, body) => {
   }
 }
 
-const genreFetchOptions = (accessToken) => {
-  const option = {
-    url: 'https://api.spotify.com/v1/browse/categories?limit=50&country=CA',
-    headers: { Authorization: `Bearer ${accessToken}` },
-    json: true
-  };
-  return option;
-};
-
 const getAppToken = (callback) => {
   const authOptions = {
     url: 'https://accounts.spotify.com/api/token',
@@ -81,22 +72,45 @@ const getAppToken = (callback) => {
   });
 }
 
+const requestToSpotify = (fetchOptions, preResponseAction, req, res) => {
+  fetchAppToken((token) => {
+    request.get(fetchOptions(token), (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          preResponseAction(body);
+          sendAsJSON(res, error, response, body);
+        } else if (response.statusCode === 401) {
+          getAppToken(token => {
+            request.get(fetchOptions(token), (error, response, body) => {
+              if (response.statusCode === 200) {
+                preResponseAction(body);
+              }
+              sendAsJSON(res, error, response, body);
+            });
+          });
+        } else {
+          sendAsJSON(res, error, response, body);
+        }
+      }); 
+  });
+}
+
+// Genre fetch endpoint
+const genreFetchOptions = (accessToken) => {
+  const option = {
+    url: 'https://api.spotify.com/v1/browse/categories?limit=50&country=CA',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    json: true
+  };
+  return option;
+};
+
+const genreFilter = (body) => {
+  spotify_manager.filterGenres(body);
+}
+
 // Export functions
 module.exports = {
   allGenres: (req, res) => {
-    fetchAppToken((token) => {
-      request.get(genreFetchOptions(token), (error, response, body) => {
-        if (!error && response.statusCode === 200) {
-          spotify_manager.filterGenres(body);
-          res.json(body);
-        } else if (response.statusCode === 401) {
-          getAppToken(token => {
-            request.get(genreFetchOptions(token), (error, response, body) => sendAsJSON(res, error, response, body)); 
-          });
-        } else {
-          res.status(response.statusCode).json(error);
-        }
-      }); 
-    });
+    requestToSpotify(genreFetchOptions, genreFilter, req, res);
   }
 }
