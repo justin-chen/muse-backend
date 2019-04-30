@@ -4,7 +4,8 @@ const request = require('request');
 const port = process.env.PORT || 5000;
 const client_id = process.env.CLIENT_ID; // Your client id
 const client_secret = process.env.CLIENT_SECRET; // Your secret
-const redirect_uri = `http://localhost:${port}/api/callback`; // Your redirect uri
+const local_redirect_uri = `http://localhost:${port}/api/callback`; // Local redirect uri
+const redirect_uri = process.env.REDIRECT_URI;
 
 const sendAsJSON = (res, error, response, body) => {
   if (!error && response.statusCode === 200) {
@@ -30,6 +31,7 @@ const stateKey = 'spotify_auth_state';
 module.exports = {
   login: (req, res) => {
     console.log('HERE');
+    uri = process.env.NODE_ENV ? redirect_uri : local_redirect_uri;
     const state = generateRandomString(16);
     res.cookie(stateKey, state);
 
@@ -40,7 +42,7 @@ module.exports = {
         response_type: 'code',
         client_id: client_id,
         scope: scope,
-        redirect_uri: redirect_uri,
+        redirect_uri: uri,
         state: state
       })
     );
@@ -50,6 +52,7 @@ module.exports = {
     // your application requests refresh and access tokens
     // after checking the state parameter
     console.log('CALLBACK');
+    uri = process.env.NODE_ENV ? redirect_uri : local_redirect_uri;
     const code = req.query.code || null;
     const state = req.query.state || null;
     const storedState = req.cookies ? req.cookies[stateKey] : null;
@@ -62,7 +65,7 @@ module.exports = {
         url: 'https://accounts.spotify.com/api/token',
         form: {
           code: code,
-          redirect_uri: redirect_uri,
+          redirect_uri: uri,
           grant_type: 'authorization_code'
         },
         headers: {
