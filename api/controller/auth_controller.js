@@ -76,12 +76,18 @@ module.exports = {
 
       request.post(authOptions, (error, response, body) => {
         if (!error && response.statusCode === 200) {
-          const access_token = body.access_token;
-          refresh_token = body.refresh_token;
-
-          res.json({ access_token: access_token, refresh_token: refresh_token });
+          const { access_token, refresh_token } = body;
+          // pass the token to the client to make requests from there
+          res.redirect('https://expo.io/@j593chen/Muse#' +
+            querystring.stringify({
+              access_token: access_token,
+              refresh_token: refresh_token
+            }));
         } else {
-          res.json({error: 'invalid_token'});
+          res.redirect('https://expo.io/@j593chen/Muse#' +
+            querystring.stringify({
+              error: 'invalid_token'
+            }));
         }
       });
     }
