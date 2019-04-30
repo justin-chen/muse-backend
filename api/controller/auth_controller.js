@@ -74,7 +74,7 @@ module.exports = {
       request.post(authOptions, (error, response, body) => {
         if (!error && response.statusCode === 200) {
 
-          const access_token = body.access_token,
+          const access_token = body.access_token;
           refresh_token = body.refresh_token;
 
           // we can also pass the token to the browser to make requests from there

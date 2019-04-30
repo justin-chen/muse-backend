@@ -36,6 +36,10 @@ const fetchAppToken = (callback) => {
   var query = datastore.createQuery('AppToken').filter('__key__', '=', appTokenObjKey);
 
   datastore.runQuery(query).then((data) => {
+    if (!data[0][0]) {
+      console.log("No token in datastore")
+      return callback("");
+    }
     var token = data[0][0].token
     console.log("Fetched token from datastore")
     return callback(token);
@@ -78,7 +82,8 @@ const requestToSpotify = (fetchOptions, preResponseAction, req, res) => {
         if (!error && response.statusCode === 200) {
           preResponseAction(body);
           sendAsJSON(res, error, response, body);
-        } else if (response.statusCode === 401) {
+        } else {
+          console.log("Stored token is invalid, fetching new token")
           getAppToken(token => {
             request.get(fetchOptions(token), (error, response, body) => {
               if (response.statusCode === 200) {
@@ -87,8 +92,6 @@ const requestToSpotify = (fetchOptions, preResponseAction, req, res) => {
               sendAsJSON(res, error, response, body);
             });
           });
-        } else {
-          sendAsJSON(res, error, response, body);
         }
       }); 
   });

@@ -3,31 +3,26 @@ module.exports = {
         const validGenres = new Set([
             'pop',
             'hiphop',
-            'workout',
-            'afro',
             'country',
-            'focus',
-            'latin',
-            'chill',
+            'rnb',
+            'workout',
             'edm_dance',
-            'rnb', // r&b
-            'rock',
-            'indie_alt', // indie
-            'roots', // folk & acoustic
             'party',
+            'chill',
+            'rock',
+            'indie_alt',
+            'roots',
+            'focus',
             'sleep',
-            'classical',
             'jazz',
-            'desi',
-            'inspirational', // christian
+            'classical',
+            'romance',
             'kpop',
-            'reggae',
             'metal',
             'soul',
-            'blue',
             'punk',
-            'funk',
-            'holidays',
+            'blues',
+            'funk'
         ]);
         body.categories.items = body.categories.items.filter(genre => validGenres.has(genre.id));
     }
