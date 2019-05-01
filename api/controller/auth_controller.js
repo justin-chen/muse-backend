@@ -6,6 +6,44 @@ const client_id = process.env.CLIENT_ID; // Your client id
 const client_secret = process.env.CLIENT_SECRET; // Your secret
 const local_redirect_uri = `http://localhost:${port}/api/callback`; // Local redirect uri
 const redirect_uri = process.env.REDIRECT_URI;
+const projectId = process.env.GCP_PROJECT_ID;
+
+const user_controller = require('./user_controller'); // for fetching user data on auth
+
+// Datastore Setup
+const Datastore = require('@google-cloud/datastore');
+const datastore = new Datastore({
+  projectId: projectId,
+});
+
+const registerUser = (access_token) => {
+  user_controller.getInfoInternal(access_token, (info_json) => {
+    const kind = 'User';
+    const user_key = datastore.key([kind, info_json.email]);
+    var query = datastore.createQuery(kind).filter('__key__', '=', user_key);
+
+    datastore.runQuery(query).then((data) => {
+      if (data[0].length === 0 && data[1].moreResults === 'NO_MORE_RESULTS') {
+        console.log('User does not exist in datastore, adding to datastore');
+
+        var newUserEntity = {
+          key: user_key,
+          data: {
+            country: info_json.country,
+          },
+        };
+
+        datastore.save(newUserEntity).then(() => {
+          console.log(`Saved ${newUserEntity.key.name}: ${newUserEntity.data.country}`);
+        }).catch(err => {
+          console.error('ERROR:', err);
+        });
+      } else {
+        console.log("User exists in datastore");
+      }
+    });
+  });
+}
 
 const sendAsJSON = (res, error, response, body) => {
   if (!error && response.statusCode === 200) {
@@ -78,6 +116,7 @@ module.exports = {
         if (!error && response.statusCode === 200) {
           const { access_token, refresh_token } = body;
           // pass the token to the client to make requests from there
+          registerUser(access_token);
           res.redirect('https://expo.io/@j593chen/Muse#' +
             querystring.stringify({
               access_token: access_token,

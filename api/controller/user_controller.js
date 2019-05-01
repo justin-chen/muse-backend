@@ -19,5 +19,16 @@ module.exports = {
         res.status(response.statusCode).json(body);
       }
     });
+  },
+
+  getInfoInternal: (access_token, callback) => {
+    request(profileFetchOptions(access_token), (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        return callback(body);
+      } else {
+        console.log("Failed to get user info");
+        return null;
+      }
+    });
   }
 }
