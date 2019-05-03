@@ -42,6 +42,7 @@ module.exports = {
       
       try {
         const { access_token, refresh_token } = await auth_manager.fetchAccessToken(uri, code);
+        console.log(access_token);
         auth_manager.registerUser(access_token);
         res.redirect('https://auth.expo.io/@j593chen/Muse#' +
           querystring.stringify({
