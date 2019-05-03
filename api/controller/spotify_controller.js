@@ -1,4 +1,5 @@
 const axios = require('axios');
+const dummy_id_placeholder = '!@#$%^&*()_';
 
 function shuffle(list) {
   let max = list.length - 1;
@@ -14,68 +15,97 @@ function shuffle(list) {
   return list;
 }
 
+async function bulk_fetch_randomized_items(endpoint, access_token, objs, batch_limit, callback) {
+  const limit = 50
+  let continue_fetch = true;
+  let page = 0;
+  let result = [];
+  let api_res;
+  let parsed_data;
+
+  for (let i in objs) {
+    let obj_endpoint = endpoint.replace(dummy_id_placeholder, objs[i]);
+    let batch = [];
+    continue_fetch = true;
+    page = 0;
+
+    while(continue_fetch) {
+      const fetch_options = {
+        url: `${obj_endpoint}limit=${limit}&offset=${page*limit}`,
+        headers: { Authorization: `Bearer ${access_token}` },
+        json: true
+      };
+
+      api_res = await axios(fetch_options);
+      parsed_data = callback(api_res);
+
+      const items = parsed_data[0];
+      continue_fetch = (parsed_data[1] != null);
+
+      batch.push(...items);
+      page += 1;
+    }
+
+    batch = shuffle(batch);
+    if (batch.length > batch_limit) {
+      batch = batch.slice(0, batch_limit);
+    }
+
+    result.push(...batch);
+  }
+
+  return result;
+}
+
+
 module.exports = {
 
   recommendedSongSelection: async (req, res) => {
     const access_token = req.body.access_token;
     const categories = req.body.categories;
-    const limit = 50;
-    const max_playlists_size = 5;
+    const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=CA&`;
+    const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?`;
+    const max_playlists_per_category = 1;
+    const max_tracks_per_playlist = 5;
+    const max_result_tracks = 10;
 
-    let category_playlists_res;
-    let all_playlists = {};
-    let all_tracks = {};
-    let continue_fetch = true;
-    let page = 0;
+    let playlists = [];
+    let tracks = [];
+    let track_batch = [];
 
-    for (let i in categories) { // for each category
-      continue_fetch = true;
-      page = 0;
+    try {
+      playlists = await bulk_fetch_randomized_items(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
+        let res_data = response.data;
+        let items = res_data.playlists.items.map(item => { return item.id; });
+        let next = res_data.playlists.next;
 
-      while(continue_fetch) { // fetch as many playlists for a category as possible
-        const category_playlist_fetch_options = {
-          url: `https://api.spotify.com/v1/browse/categories/${categories[i]}/playlists?limit=${limit}&offset=${page*limit}`,
-          headers: { Authorization: `Bearer ${access_token}` },
-          json: true
-        };
+        return [items, next];
+      });
+    } catch(error) {
+      return res.json(error.response.data);
+    }
+    
+    for (let i in playlists) {
+      try {
+        track_batch = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
+          let res_data = response.data;
+          let items = res_data.items.map(item => { return { id: item.track.id, name: item.track.name, artist: item.track.artists[0].name }; });
+          let next = res_data.next;
 
-        try {
-          category_playlists_res = await axios(category_playlist_fetch_options);
-        } catch (error) {
-          res.json(error.response.data);
-        }
-
-        const res_data = category_playlists_res.data.playlists;
-        const playlists = res_data.items
-        continue_fetch = (res_data.next != null);
-        playlist_ids = playlists.map(playlist => { return playlist.id; });
-
-        if (all_playlists[categories[i]]) {
-          all_playlists[categories[i]].push(...playlist_ids);
-        } else {
-          all_playlists[categories[i]] = playlist_ids;
-        }
-
-        page += 1;
+          return [items, next];
+        });
+      } catch(error) {
+        return res.json(error.response.data);
       }
+
+      tracks.push(...track_batch);
     }
 
-    // now we all_playlists which is a map of category to all playlists tagged with the category
-    console.log(all_playlists);
-  
-    Object.keys(all_playlists).forEach((key, idx) => {
-      all_playlists[key] = shuffle(all_playlists[key]);
+    tracks = shuffle(tracks);
+    if (tracks.length > max_result_tracks) {
+      tracks = tracks.slice(0, max_result_tracks);
+    }
 
-      if (all_playlists[key].length > max_playlists_size) {
-        all_playlists[key] = all_playlists[key].slice(0, max_playlists_size);
-      }
-    });
-
-    console.log(all_playlists);
-    
-    // take n random playlists and get all tracks in those playlists
-  
-
-    res.send('finished');
+    res.json({ recommended_tracks : tracks });
   }
 }
