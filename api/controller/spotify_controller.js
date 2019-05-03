@@ -21,7 +21,6 @@ function getRandomSublist(list, limit) {
   if (list.length > limit) {
     list = list.slice(0, limit);
   }
-
   return list;
 }
 
@@ -79,14 +78,14 @@ module.exports = {
     try {
       playlists = await bulk_fetch_randomized_items(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
-        let items = res_data.playlists.items.map(item => { return item.id; });
+        let items = res_data.playlists.items.map(item => item.id);
         let next = res_data.playlists.next;
         return [items, next];
       });
 
       tracks = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
-        let items = res_data.items.map(item => { return { id: item.track.id, name: item.track.name, artist: item.track.artists[0].name }; });
+        let items = res_data.items.map(item => { id: item.track.id, name: item.track.name, artist: item.track.artists[0].name });
         let next = res_data.next;
         return [items, next];
       });
