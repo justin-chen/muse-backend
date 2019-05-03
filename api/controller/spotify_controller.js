@@ -15,6 +15,16 @@ function shuffle(list) {
   return list;
 }
 
+// return a random sublist with size up to limit
+function getRandomSublist(list, limit) {
+  list = shuffle(list);
+  if (list.length > limit) {
+    list = list.slice(0, limit);
+  }
+
+  return list;
+}
+
 async function bulk_fetch_randomized_items(endpoint, access_token, objs, batch_limit, callback) {
   const limit = 50
   let continue_fetch = true;
@@ -46,20 +56,14 @@ async function bulk_fetch_randomized_items(endpoint, access_token, objs, batch_l
       page += 1;
     }
 
-    batch = shuffle(batch);
-    if (batch.length > batch_limit) {
-      batch = batch.slice(0, batch_limit);
-    }
-
+    batch = getRandomSublist(batch, batch_limit);
     result.push(...batch);
   }
 
   return result;
 }
 
-
 module.exports = {
-
   recommendedSongSelection: async (req, res) => {
     const access_token = req.body.access_token;
     const categories = req.body.categories;
@@ -71,41 +75,26 @@ module.exports = {
 
     let playlists = [];
     let tracks = [];
-    let track_batch = [];
 
     try {
       playlists = await bulk_fetch_randomized_items(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
         let items = res_data.playlists.items.map(item => { return item.id; });
         let next = res_data.playlists.next;
+        return [items, next];
+      });
 
+      tracks = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
+        let res_data = response.data;
+        let items = res_data.items.map(item => { return { id: item.track.id, name: item.track.name, artist: item.track.artists[0].name }; });
+        let next = res_data.next;
         return [items, next];
       });
     } catch(error) {
       return res.json(error.response.data);
     }
-    
-    for (let i in playlists) {
-      try {
-        track_batch = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
-          let res_data = response.data;
-          let items = res_data.items.map(item => { return { id: item.track.id, name: item.track.name, artist: item.track.artists[0].name }; });
-          let next = res_data.next;
 
-          return [items, next];
-        });
-      } catch(error) {
-        return res.json(error.response.data);
-      }
-
-      tracks.push(...track_batch);
-    }
-
-    tracks = shuffle(tracks);
-    if (tracks.length > max_result_tracks) {
-      tracks = tracks.slice(0, max_result_tracks);
-    }
-
+    tracks = getRandomSublist(tracks, max_result_tracks);
     res.json({ recommended_tracks : tracks });
   }
 }
