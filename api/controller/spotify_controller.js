@@ -69,7 +69,7 @@ module.exports = {
     const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=CA&`;
     const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?`;
     const max_playlists_per_category = 1;
-    const max_tracks_per_playlist = 5;
+    const max_tracks_per_playlist = 10;
     const max_result_tracks = 10;
 
     let playlists = [];
@@ -85,7 +85,17 @@ module.exports = {
 
       tracks = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
-        let items = res_data.items.map(item => ({ id: item.track.id, name: item.track.name, artist: item.track.artists[0].name }));
+        let items = res_data.items.map(item => {
+          return {
+            id: item.track.id,
+            spotify_uri: item.track.uri,
+            name: item.track.name,
+            artist: item.track.artists[0].name,
+            artist_id: item.track.artists[0].id,
+            artwork: item.track.album.images,
+            preview_url: item.track.preview_url,
+          };
+        });
         let next = res_data.next;
         return [items, next];
       });
