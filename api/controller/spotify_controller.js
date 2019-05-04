@@ -65,7 +65,7 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 
 module.exports = {
   recommendedSongSelection: async (req, res) => {
-    const { access_token, categories, max_result_tracks } = req.body;
+    const { access_token, categories, limit: max_result_tracks } = req.body;
     const user_data = await user_manager.fetchUserData(access_token);
     const user_country = user_data.country;
     const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
