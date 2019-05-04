@@ -1,4 +1,6 @@
 const axios = require('axios');
+const user_manager = require('../managers/user_manager');
+
 const dummy_id_placeholder = '!@#$%^&*()_';
 
 function shuffle(list) {
@@ -66,11 +68,14 @@ module.exports = {
   recommendedSongSelection: async (req, res) => {
     const access_token = req.body.access_token;
     const categories = req.body.categories;
-    const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=CA&`;
-    const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?`;
+    const max_result_tracks = req.body.limit;
+
+    const user_data = await user_manager.fetchUserData(access_token);
+    const user_country = user_data.country;
+    const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
+    const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?market=${user_country}&`;
     const max_playlists_per_category = 1;
     const max_tracks_per_playlist = 10;
-    const max_result_tracks = 10;
 
     let playlists = [];
     let tracks = [];
