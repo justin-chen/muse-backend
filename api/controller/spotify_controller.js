@@ -26,7 +26,7 @@ function getRandomSublist(list, limit) {
   return list;
 }
 
-async function bulk_fetch_randomized_items(endpoint, access_token, objs, batch_limit, callback) {
+async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limit, callback) {
   const limit = 50
   let continue_fetch = true;
   let page = 0;
@@ -81,14 +81,14 @@ module.exports = {
     let tracks = [];
 
     try {
-      playlists = await bulk_fetch_randomized_items(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
+      playlists = await bulkFetchRandomizedItems(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
         let items = res_data.playlists.items.map(item => item.id);
         let next = res_data.playlists.next;
         return [items, next];
       });
 
-      tracks = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
+      tracks = await bulkFetchRandomizedItems(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
         let items = res_data.items.map(item => ({
           id: item.track.id,
