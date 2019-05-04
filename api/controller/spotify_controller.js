@@ -85,17 +85,15 @@ module.exports = {
 
       tracks = await bulk_fetch_randomized_items(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
-        let items = res_data.items.map(item => {
-          return {
-            id: item.track.id,
-            spotify_uri: item.track.uri,
-            name: item.track.name,
-            artist: item.track.artists[0].name,
-            artist_id: item.track.artists[0].id,
-            artwork: item.track.album.images[0].url,
-            preview_url: item.track.preview_url,
-          };
-        });
+        let items = res_data.items.map(item => ({
+          id: item.track.id,
+          spotify_uri: item.track.uri,
+          name: item.track.name,
+          artist: item.track.artists[0].name,
+          artist_id: item.track.artists[0].id,
+          artwork: item.track.album.images[0].url,
+          preview_url: item.track.preview_url,
+        }));
         let next = res_data.next;
         return [items, next];
       });
