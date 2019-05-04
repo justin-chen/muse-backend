@@ -66,18 +66,17 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 module.exports = {
   recommendedSongSelection: async (req, res) => {
     const { access_token, categories, limit: max_result_tracks } = req.body;
-    const user_data = await user_manager.fetchUserData(access_token);
-    const user_country = user_data.country;
-    const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
-    const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?market=${user_country}&`;
     const max_playlists_per_category = 1;
     const max_tracks_per_playlist = 10;
-
-    let playlists = [];
     let tracks = [];
 
     try {
-      playlists = await bulkFetchRandomizedItems(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
+      const user_data = await user_manager.fetchUserData(access_token);
+      const user_country = user_data.country;
+      const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
+      const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?market=${user_country}&`;
+
+      let playlists = await bulkFetchRandomizedItems(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
         let items = res_data.playlists.items.map(item => item.id);
         let next = res_data.playlists.next;
@@ -99,8 +98,8 @@ module.exports = {
         return [items, next];
       });
     } catch(error) {
-      console.log(error);
-      return res.json(error.response.data);
+      if (error.response) return res.status(error.response.status).json(error.response.data);
+      else return res.status(400).json({ error: 'Request to Spotify API failed'});
     }
 
     tracks = getRandomSublist(tracks, max_result_tracks);
