@@ -1,6 +1,5 @@
 const axios = require('axios');
 const user_manager = require('../managers/user_manager');
-
 const dummy_id_placeholder = '!@#$%^&*()_';
 
 function shuffle(list) {
@@ -103,6 +102,7 @@ module.exports = {
         return [items, next];
       });
     } catch(error) {
+      console.log(error);
       return res.json(error.response.data);
     }
 
