@@ -92,7 +92,7 @@ module.exports = {
             name: item.track.name,
             artist: item.track.artists[0].name,
             artist_id: item.track.artists[0].id,
-            artwork: item.track.album.images,
+            artwork: item.track.album.images[0].url,
             preview_url: item.track.preview_url,
           };
         });
