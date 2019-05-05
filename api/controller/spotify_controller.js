@@ -25,6 +25,14 @@ function getRandomSublist(list, limit) {
   return list;
 }
 
+function formatSublist(tracks) {
+  return tracks.reduce((obj, track) => {
+    const { id } = track;
+    obj[id] = track;
+    return obj;
+  }, {});
+}
+
 async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limit, callback) {
   const limit = 50
   let continue_fetch = true;
@@ -39,9 +47,9 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
     continue_fetch = true;
     page = 0;
 
-    while(continue_fetch) {
+    while (continue_fetch) {
       const fetch_options = {
-        url: `${obj_endpoint}limit=${limit}&offset=${page*limit}`,
+        url: `${obj_endpoint}limit=${limit}&offset=${page * limit}`,
         headers: { Authorization: `Bearer ${access_token}` },
         json: true
       };
@@ -97,12 +105,12 @@ module.exports = {
         let next = res_data.next;
         return [items, next];
       });
-    } catch(error) {
+    } catch (error) {
       if (error.response) return res.status(error.response.status).json(error.response.data);
-      else return res.status(400).json({ error: 'Request to Spotify API failed'});
+      else return res.status(400).json({ error: 'Request to Spotify API failed' });
     }
 
     tracks = getRandomSublist(tracks, max_result_tracks);
-    res.json({ recommended_tracks : tracks });
+    res.json(formatSublist(tracks));
   }
 }
