@@ -130,5 +130,45 @@ module.exports = {
 
     tracks = getRandomSublist(tracks, max_result_tracks);
     res.json(mergeObjects(tracks));
+  },
+
+  exportToPlaylist: async (req, res) => {
+    let { access_token, name, description, is_public, is_collaborative, track_uris } = req.body; // track_uris format: ["uri1", "uri2", "uri3"]
+    let created_playlist_id;
+
+    try {
+      const user_data = await user_manager.fetchUserData(access_token);
+      const user_id = user_data.id;
+
+      const playlist_create_fetch_options = {
+        method: 'post',
+        url: `https://api.spotify.com/v1/users/${user_id}/playlists`,
+        headers: { Authorization: `Bearer ${access_token}` },
+        data: JSON.stringify({ name: name, description: description, public: is_public, collaborative: is_collaborative }),
+        json: true
+      };
+
+      const create_playlist_res = await axios(playlist_create_fetch_options);
+      created_playlist_id = create_playlist_res.data.id;
+
+      const playlist_add_tracks_fetch_options = {
+        method: 'post',
+        url: `https://api.spotify.com/v1/playlists/${created_playlist_id}/tracks`,
+        headers: { Authorization: `Bearer ${access_token}` },
+        data: JSON.stringify({ uris: track_uris }),
+        json: true
+      };
+
+      await axios(playlist_add_tracks_fetch_options);
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        // Should log error somewhere
+        return res.status(400).json({ error: 'Request to Spotify API failed' });
+      }
+    }
+
+    res.status(200).json({ created_playlist_id: created_playlist_id });
   }
 }

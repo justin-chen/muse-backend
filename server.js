@@ -28,4 +28,6 @@ app.get('/api/hello', app_controller.helloWorld);
 
 app.post('/api/get_songs', spotify_controller.recommendedSongSelection)
 
+app.post('/api/export_to_playlist', spotify_controller.exportToPlaylist);
+
 app.listen(port, () => console.log(`Listening on port ${port}`));
