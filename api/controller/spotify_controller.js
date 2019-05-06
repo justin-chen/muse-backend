@@ -1,6 +1,8 @@
 const axios = require('axios');
 const user_manager = require('../managers/user_manager');
+const spotify_utils = require('../utils/spotify_utils');
 const dummy_id_placeholder = '!@#$%^&*()_';
+const placeholder_img = 'https://via.placeholder.com/650/8BE79A/ffffff?text=Muse';
 
 function shuffle(list) {
   let max = list.length - 1;
@@ -23,14 +25,6 @@ function getRandomSublist(list, limit) {
     list = list.slice(0, limit);
   }
   return list;
-}
-
-function formatSublist(tracks) {
-  return tracks.reduce((obj, track) => {
-    const { id } = track;
-    obj[id] = track;
-    return obj;
-  }, {});
 }
 
 async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limit, callback) {
@@ -73,10 +67,14 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 
 module.exports = {
   recommendedSongSelection: async (req, res) => {
-    const { access_token, categories, limit: max_result_tracks } = req.body;
+    let { access_token, categories, limit: max_result_tracks } = req.body;
     const max_playlists_per_category = 1;
     const max_tracks_per_playlist = 10;
     let tracks = [];
+
+    if (categories.length < 1) {
+      categories = spotify_utils.getCategories();
+    }
 
     try {
       const user_data = await user_manager.fetchUserData(access_token);
@@ -93,24 +91,40 @@ module.exports = {
 
       tracks = await bulkFetchRandomizedItems(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
-        let items = res_data.items.map(item => ({
-          id: item.track.id,
-          spotify_uri: item.track.uri,
-          name: item.track.name,
-          artist: item.track.artists[0].name,
-          artist_id: item.track.artists[0].id,
-          artwork: item.track.album.images[0].url,
-          preview_url: item.track.preview_url,
-        }));
+        let formatted_items = []
+
+        res_data.items.forEach(item => {
+          if (!item.track) return;
+          if (!item.track.preview_url) return;
+
+          let formatted_item = {}
+          let id = item.track.id;
+          let value = {
+            name: item.track.name,
+            spotify_uri: item.track.uri,
+            artist: item.track.artists[0].name,
+            artist_id: item.track.artists[0].id,
+            artwork: item.track.album.images.length > 0 ? item.track.album.images[0].url : placeholder_img,
+            preview_url: item.track.preview_url,
+          };
+
+          formatted_item[id] = value;
+          formatted_items.push(formatted_item);
+        })
+
         let next = res_data.next;
-        return [items, next];
+        return [formatted_items, next];
       });
     } catch (error) {
-      if (error.response) return res.status(error.response.status).json(error.response.data);
-      else return res.status(400).json({ error: 'Request to Spotify API failed' });
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        // Should log error somewhere
+        return res.status(400).json({ error: 'Request to Spotify API failed' });
+      }
     }
 
     tracks = getRandomSublist(tracks, max_result_tracks);
-    res.json(formatSublist(tracks));
+    res.json(tracks);
   }
 }
