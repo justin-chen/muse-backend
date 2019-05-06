@@ -27,6 +27,10 @@ function getRandomSublist(list, limit) {
   return list;
 }
 
+function mergeObjects(objs) {
+  return objs.reduce(((result, obj) => Object.assign(result, obj)), {});
+}
+
 async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limit, callback) {
   const limit = 50
   let continue_fetch = true;
@@ -125,6 +129,6 @@ module.exports = {
     }
 
     tracks = getRandomSublist(tracks, max_result_tracks);
-    res.json(tracks);
+    res.json(mergeObjects(tracks));
   }
 }
