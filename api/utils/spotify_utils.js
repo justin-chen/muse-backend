@@ -165,8 +165,8 @@ module.exports = {
   },
 
   filterGenres: body => {
-    const validGenres = new Set(module.exports.getCategories());
-    body.categories.items = body.categories.items.filter(genre => validGenres.has(genre.id));
+    const valid_genres = new Set(module.exports.getCategories());
+    body.categories.items = body.categories.items.filter(genre => valid_genres.has(genre.id));
   },
 
   isValidGenreSeed: genre => {

@@ -1,8 +1,8 @@
-const axios = require('axios');
-const user_manager = require('../managers/user_manager');
-const spotify_utils = require('../utils/spotify_utils');
-const dummy_id_placeholder = '!@#$%^&*()_';
-const placeholder_img = 'https://via.placeholder.com/650/8BE79A/ffffff?text=Muse';
+const AXIOS = require('axios');
+const USER_MANAGER = require('../managers/user_manager');
+const SPOTIFY_UTILS = require('../utils/spotify_utils');
+const DUMMY_ID = '!@#$%^&*()_';
+const PLACEHOLDER_IMG = 'https://via.placeholder.com/650/8BE79A/ffffff?text=Muse';
 
 function shuffle(list) {
   let max = list.length - 1;
@@ -40,7 +40,7 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
   let parsed_data;
 
   for (let i in objs) {
-    let obj_endpoint = endpoint.replace(dummy_id_placeholder, objs[i]);
+    let obj_endpoint = endpoint.replace(DUMMY_ID, objs[i]);
     let batch = [];
     continue_fetch = true;
     page = 0;
@@ -52,7 +52,7 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
         json: true
       };
 
-      api_res = await axios(fetch_options);
+      api_res = await AXIOS(fetch_options);
       parsed_data = callback(api_res);
 
       const items = parsed_data[0];
@@ -71,94 +71,94 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 
 module.exports = {
   userSeedRecommendedSongSelection: async (req, res) => {
-    let { accessToken, limit: max_result_tracks }= req.body;
-    let { favArtists, favGenres } = await user_manager.getUserSeeds(accessToken)
-    let maxPerSeedList = 5;
-    let artistSeeds = [];
-    let genreSeeds = [];
+    let { access_token, limit: max_result_tracks }= req.body;
+    let { fav_artists, fav_genres } = await USER_MANAGER.getUserSeeds(access_token)
+    let max_seed_list_size = 5;
+    let artist_seeds = [];
+    let genre_seeds = [];
 
     // Get up to 5 random artist ids
-    let sumWeights = 0;
-    for (let artistId in favArtists.items) {
-      sumWeights += favArtists.items[artistId].weight
+    let weight_sum = 0;
+    for (let artist_id in fav_artists.items) {
+      weight_sum += fav_artists.items[artist_id].weight
     }
 
     // While we haven't gotten 5 randoms yet, or we haven't gotten whatever the max (if < 5) randoms
-    let totalArtistsLength = Object.keys(favArtists.items).length;
-    while ((totalArtistsLength >= maxPerSeedList && artistSeeds.length < maxPerSeedList) || (totalArtistsLength < maxPerSeedList && artistSeeds.length < totalArtistsLength)) {
-      var randWeight = Math.floor(Math.random() * (sumWeights)); // in range [0, sumWeights)
-      var currWeight = 0;
-      var chosenId;
+    let total_artists_length = Object.keys(fav_artists.items).length;
+    while ((total_artists_length >= max_seed_list_size && artist_seeds.length < max_seed_list_size) || (total_artists_length < max_seed_list_size && artist_seeds.length < total_artists_length)) {
+      var rand_weight = Math.floor(Math.random() * (weight_sum)); // in range [0, weight_sum)
+      var curr_weight = 0;
+      var chosen_id;
 
-      for (var artistId in favArtists.items) {
-        currWeight += favArtists.items[artistId].weight;
-        if (currWeight > randWeight) {
+      for (var artist_id in fav_artists.items) {
+        curr_weight += fav_artists.items[artist_id].weight;
+        if (curr_weight > rand_weight) {
           // take this element
-          artistSeeds.push(artistId);
-          chosenId = artistId;
-          sumWeights -= favArtists.items[artistId].weight;
+          artist_seeds.push(artist_id);
+          chosen_id = artist_id;
+          weight_sum -= fav_artists.items[artist_id].weight;
           break;
         }
       }
 
-      delete favArtists.items[chosenId];
+      delete fav_artists.items[chosen_id];
     }
 
     // Get up to 5 random genres
-    sumWeights = 0;
-    for (let genre in favGenres.items) {
-      sumWeights += favGenres.items[genre].weight
+    weight_sum = 0;
+    for (let genre in fav_genres.items) {
+      weight_sum += fav_genres.items[genre].weight
     }
 
-    let totalGenresLength = Object.keys(favGenres.items).length;
-    while ((totalGenresLength >= maxPerSeedList && genreSeeds.length < maxPerSeedList) || (totalGenresLength < maxPerSeedList && genreSeeds.length < totalGenresLength)) {
-      var randWeight = Math.floor(Math.random() * (sumWeights)); // in range [0, sumWeights)
-      var currWeight = 0;
-      var chosenGenre;
+    let total_genres_length = Object.keys(fav_genres.items).length;
+    while ((total_genres_length >= max_seed_list_size && genre_seeds.length < max_seed_list_size) || (total_genres_length < max_seed_list_size && genre_seeds.length < total_genres_length)) {
+      var rand_weight = Math.floor(Math.random() * (weight_sum)); // in range [0, weight_sum)
+      var curr_weight = 0;
+      var chosen_genre;
 
-      for (var genre in favGenres.items) {
-        currWeight += favGenres.items[genre].weight;
-        if (currWeight > randWeight) {
+      for (var genre in fav_genres.items) {
+        curr_weight += fav_genres.items[genre].weight;
+        if (curr_weight > rand_weight) {
           // take this element
-          genreSeeds.push(genre);
-          chosenGenre = genre;
-          sumWeights -= favGenres.items[genre].weight;
+          genre_seeds.push(genre);
+          chosen_genre = genre;
+          weight_sum -= fav_genres.items[genre].weight;
           break;
         }
       }
 
-      delete favGenres.items[chosenGenre];
+      delete fav_genres.items[chosen_genre];
     }
 
-    let combinedSeeds = artistSeeds.concat(genreSeeds);
-    combinedSeeds = getRandomSublist(combinedSeeds, 5);
+    let combined_seeds = artist_seeds.concat(genre_seeds);
+    combined_seeds = getRandomSublist(combined_seeds, 5);
 
     // Now that we have the 5 seeds, redistribute them back to their types so we know which ones are ids and which ones are genres
-    artistSeeds = [];
-    genreSeeds = [];
-    for (let i = 0; i < combinedSeeds.length; i++) {
-      if (spotify_utils.isValidGenreSeed(combinedSeeds[i])) {
-        genreSeeds.push(combinedSeeds[i]);
+    artist_seeds = [];
+    genre_seeds = [];
+    for (let i = 0; i < combined_seeds.length; i++) {
+      if (SPOTIFY_UTILS.isValidGenreSeed(combined_seeds[i])) {
+        genre_seeds.push(combined_seeds[i]);
       } else {
-        artistSeeds.push(combinedSeeds[i]);
+        artist_seeds.push(combined_seeds[i]);
       }
     }
 
-    let userData = await user_manager.fetchUserData(accessToken);
-    let userCountry = userData.country;
-    artistSeeds = artistSeeds.join(",");
-    genreSeeds = genreSeeds.join(",");
+    let user_data = await USER_MANAGER.fetchUserData(access_token);
+    let user_country = user_data.country;
+    artist_seeds = artist_seeds.join(",");
+    genre_seeds = genre_seeds.join(",");
 
     // make recommendation api with seeds
     const options = {
-      url: `https://api.spotify.com/v1/recommendations?limit=30&market=${userCountry}&seed_artists=${artistSeeds}&seed_genres=${genreSeeds}&min_popularity=50`,
-      headers: { Authorization: `Bearer ${accessToken}` },
+      url: `https://api.spotify.com/v1/recommendations?limit=30&market=${user_country}&seed_artists=${artist_seeds}&seed_genres=${genre_seeds}&min_popularity=50`,
+      headers: { Authorization: `Bearer ${access_token}` },
     };
 
-    const recommendedTrackResponse = await axios(options);
+    const recommended_track_resp = await AXIOS(options);
 
     let formatted_tracks = []
-    recommendedTrackResponse.data.tracks.forEach(track => {
+    recommended_track_resp.data.tracks.forEach(track => {
       if (!track.preview_url) return;
 
       let formatted_track = {}
@@ -168,7 +168,7 @@ module.exports = {
         spotify_uri: track.uri,
         artist: track.artists[0].name,
         artist_id: track.artists[0].id,
-        artwork: track.album.images.length > 0 ? track.album.images[0].url : placeholder_img,
+        artwork: track.album.images.length > 0 ? track.album.images[0].url : PLACEHOLDER_IMG,
         preview_url: track.preview_url,
       };
 
@@ -181,13 +181,13 @@ module.exports = {
   },
 
   verifyEnoughData: async (req, res) => {
-    let isAvail = await user_manager.verifyUserSeeds(req.body.accessToken);
-    res.json({ hasEnoughData: isAvail });
+    let has_data = await USER_MANAGER.verifyUserSeeds(req.body.access_token);
+    res.json({ has_enough_data: has_data });
   },
 
   updateUserSeeds: async (req, res) => {
-    let { accessToken, artistIds } = req.body;
-    await user_manager.updateUserSeeds(accessToken, artistIds);
+    let { access_token, artist_ids } = req.body;
+    await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
     res.json({ message: "Update finished" });
   },
 
@@ -198,14 +198,14 @@ module.exports = {
     let tracks = [];
 
     if (categories.length < 1) {
-      categories = spotify_utils.getCategories();
+      categories = SPOTIFY_UTILS.getCategories();
     }
 
     try {
-      const user_data = await user_manager.fetchUserData(access_token);
+      const user_data = await USER_MANAGER.fetchUserData(access_token);
       const user_country = user_data.country;
-      const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
-      const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?market=${user_country}&`;
+      const category_endpoint = `https://api.spotify.com/v1/browse/categories/${DUMMY_ID}/playlists?country=${user_country}&`;
+      const playlist_endpoint = `https://api.spotify.com/v1/playlists/${DUMMY_ID}/tracks?market=${user_country}&`;
 
       let playlists = await bulkFetchRandomizedItems(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
@@ -229,7 +229,7 @@ module.exports = {
             spotify_uri: item.track.uri,
             artist: item.track.artists[0].name,
             artist_id: item.track.artists[0].id,
-            artwork: item.track.album.images.length > 0 ? item.track.album.images[0].url : placeholder_img,
+            artwork: item.track.album.images.length > 0 ? item.track.album.images[0].url : PLACEHOLDER_IMG,
             preview_url: item.track.preview_url,
           };
 

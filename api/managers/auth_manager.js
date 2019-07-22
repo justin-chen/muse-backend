@@ -1,14 +1,13 @@
-const axios = require('axios');
-const client_id = process.env.CLIENT_ID; // Your client id
-const client_secret = process.env.CLIENT_SECRET; // Your secret
-
-const user_manager = require('./user_manager');
+const AXIOS = require('axios');
+const CLIENT_ID = process.env.CLIENT_ID; // Your client id
+const CLIENT_SECRET = process.env.CLIENT_SECRET; // Your secret
+const USER_MANAGER = require('./user_manager');
 
 // Datastore Setup
-const projectId = process.env.GCP_PROJECT_ID;
+const project_id = process.env.GCP_PROJECT_ID;
 const Datastore = require('@google-cloud/datastore');
 const datastore = new Datastore({
-  projectId: projectId,
+  projectId: project_id,
 });
 
 // log in related API calls
@@ -24,30 +23,30 @@ module.exports = {
         grant_type: 'authorization_code'
       },
       headers: {
-        'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+        'Authorization': 'Basic ' + (new Buffer(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
       },
     };
-    const { data } = await axios(options);
+    const { data } = await AXIOS(options);
     return data;
   },
 
   registerUser: async (access_token) => {
-    const spotifyUserData = await user_manager.fetchUserData(access_token);
+    const spotify_user_data = await USER_MANAGER.fetchUserData(access_token);
     const kind = 'User';
-    const user_key = datastore.key([kind, spotifyUserData.email]);
+    const user_key = datastore.key([kind, spotify_user_data.email]);
     const query = datastore.createQuery(kind).filter('__key__', '=', user_key);
-    const museUserData = await datastore.runQuery(query);
+    const muse_user_data = await datastore.runQuery(query);
 
-    if (museUserData[0].length === 0 && museUserData[1].moreResults === 'NO_MORE_RESULTS') {
+    if (muse_user_data[0].length === 0 && muse_user_data[1]["moreResults"] === 'NO_MORE_RESULTS') {
       console.log('User does not exist in datastore, adding to datastore');
-      var newUserEntity = {
+      var new_user_entity = {
         key: user_key,
         data: {
-          country: spotifyUserData.country,
+          country: spotify_user_data.country,
         },
       };
-      await datastore.save(newUserEntity);
-      console.log(`Saved ${newUserEntity.key.name}: ${newUserEntity.data.country}`);
+      await datastore.save(new_user_entity);
+      console.log(`Saved ${new_user_entity.key.name}: ${new_user_entity.data.country}`);
     } else {
       console.log("User exists in datastore");
     }
