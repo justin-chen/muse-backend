@@ -70,6 +70,127 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 }
 
 module.exports = {
+  userSeedRecommendedSongSelection: async (req, res) => {
+    let { accessToken, limit: max_result_tracks }= req.body;
+    let { favArtists, favGenres } = await user_manager.getUserSeeds(accessToken)
+    let maxPerSeedList = 5;
+    let artistSeeds = [];
+    let genreSeeds = [];
+
+    // Get up to 5 random artist ids
+    let sumWeights = 0;
+    for (let artistId in favArtists.items) {
+      sumWeights += favArtists.items[artistId].weight
+    }
+
+    // While we haven't gotten 5 randoms yet, or we haven't gotten whatever the max (if < 5) randoms
+    let totalArtistsLength = Object.keys(favArtists.items).length;
+    while ((totalArtistsLength >= maxPerSeedList && artistSeeds.length < maxPerSeedList) || (totalArtistsLength < maxPerSeedList && artistSeeds.length < totalArtistsLength)) {
+      var randWeight = Math.floor(Math.random() * (sumWeights)); // in range [0, sumWeights)
+      var currWeight = 0;
+      var chosenId;
+
+      for (var artistId in favArtists.items) {
+        currWeight += favArtists.items[artistId].weight;
+        if (currWeight > randWeight) {
+          // take this element
+          artistSeeds.push(artistId);
+          chosenId = artistId;
+          sumWeights -= favArtists.items[artistId].weight;
+          break;
+        }
+      }
+
+      delete favArtists.items[chosenId];
+    }
+
+    // Get up to 5 random genres
+    sumWeights = 0;
+    for (let genre in favGenres.items) {
+      sumWeights += favGenres.items[genre].weight
+    }
+
+    let totalGenresLength = Object.keys(favGenres.items).length;
+    while ((totalGenresLength >= maxPerSeedList && genreSeeds.length < maxPerSeedList) || (totalGenresLength < maxPerSeedList && genreSeeds.length < totalGenresLength)) {
+      var randWeight = Math.floor(Math.random() * (sumWeights)); // in range [0, sumWeights)
+      var currWeight = 0;
+      var chosenGenre;
+
+      for (var genre in favGenres.items) {
+        currWeight += favGenres.items[genre].weight;
+        if (currWeight > randWeight) {
+          // take this element
+          genreSeeds.push(genre);
+          chosenGenre = genre;
+          sumWeights -= favGenres.items[genre].weight;
+          break;
+        }
+      }
+
+      delete favGenres.items[chosenGenre];
+    }
+
+    let combinedSeeds = artistSeeds.concat(genreSeeds);
+    combinedSeeds = getRandomSublist(combinedSeeds, 5);
+
+    // Now that we have the 5 seeds, redistribute them back to their types so we know which ones are ids and which ones are genres
+    artistSeeds = [];
+    genreSeeds = [];
+    for (let i = 0; i < combinedSeeds.length; i++) {
+      if (spotify_utils.isValidGenreSeed(combinedSeeds[i])) {
+        genreSeeds.push(combinedSeeds[i]);
+      } else {
+        artistSeeds.push(combinedSeeds[i]);
+      }
+    }
+
+    let userData = await user_manager.fetchUserData(accessToken);
+    let userCountry = userData.country;
+    artistSeeds = artistSeeds.join(",");
+    genreSeeds = genreSeeds.join(",");
+
+    // make recommendation api with seeds
+    const options = {
+      url: `https://api.spotify.com/v1/recommendations?limit=30&market=${userCountry}&seed_artists=${artistSeeds}&seed_genres=${genreSeeds}&min_popularity=50`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    };
+
+    const recommendedTrackResponse = await axios(options);
+
+    let formatted_tracks = []
+    recommendedTrackResponse.data.tracks.forEach(track => {
+      if (!track.preview_url) return;
+
+      let formatted_track = {}
+      let id = track.id;
+      let value = {
+        name: track.name,
+        spotify_uri: track.uri,
+        artist: track.artists[0].name,
+        artist_id: track.artists[0].id,
+        artwork: track.album.images.length > 0 ? track.album.images[0].url : placeholder_img,
+        preview_url: track.preview_url,
+      };
+
+      formatted_track[id] = value;
+      formatted_tracks.push(formatted_track);
+    })
+
+    formatted_tracks = getRandomSublist(formatted_tracks, max_result_tracks);
+    res.json(mergeObjects(formatted_tracks));
+  },
+
+  verifyEnoughData: async (req, res) => {
+    let isAvail = await user_manager.verifyUserSeeds(req.body.accessToken);
+    res.json({ hasEnoughData: isAvail });
+  },
+
+  updateUserSeeds: async (req, res) => {
+    let { accessToken, artistIds } = req.body;
+    await user_manager.updateUserSeeds(accessToken, artistIds);
+    res.json({ message: "Update finished" });
+  },
+
   recommendedSongSelection: async (req, res) => {
     let { access_token, categories, limit: max_result_tracks } = req.body;
     const max_playlists_per_category = 1;

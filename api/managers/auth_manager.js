@@ -38,7 +38,6 @@ module.exports = {
     const query = datastore.createQuery(kind).filter('__key__', '=', user_key);
     const museUserData = await datastore.runQuery(query);
 
-
     if (museUserData[0].length === 0 && museUserData[1].moreResults === 'NO_MORE_RESULTS') {
       console.log('User does not exist in datastore, adding to datastore');
       var newUserEntity = {
