@@ -11,6 +11,35 @@ const SPOTIFY_UTILS = require('../utils/spotify_utils');
 const AXIOS = require('axios');
 const MAX_SIZE = 50;
 
+normalizeIncrementingValues = (data) => {
+  // Normalize artist global_counter, last_access, and weight values
+  let lowest_lru_time = data.global_counter // must be at most global_counter
+  let lowest_weight = Number.MAX_SAFE_INTEGER; // could be some big int
+  for (var key in data.items) {   // find lowest lru time
+    if (data.items[key].last_accessed < lowest_lru_time) {
+      lowest_lru_time = data.items[key].last_accessed;
+    }
+    if (data.items[key].weight < lowest_weight) {
+      lowest_weight = data.items[key].weight
+    }
+  }
+
+  // subtract global_counter and all last_accessed by lowest lru time
+  data.global_counter -= lowest_lru_time;
+  for (var key in data.items) {
+    data.items[key].last_accessed -= lowest_lru_time;
+  }
+
+  // divide all weights by lowest weight if lowest weight is > 0
+  if (lowest_weight > 1) { // dividing by 1 would be no-op
+    for (var key in data.items) {
+      data.items[key].weight /= lowest_weight;
+    }
+  }
+
+  return data;
+}
+
 updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, fav_genres) => {
   for (let i = 0; i < artist_ids.length; i++) {
     id = artist_ids[i];
@@ -45,7 +74,6 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
             }
           }
           delete fav_genres.items[genre_key];
-          // TODO: Reset last_accessed values and global_counter by subtracting all by the lowest last_accessed value
         }
 
         // Should always have enough space here
@@ -63,12 +91,12 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
         var lru_time = fav_artists.global_counter;
         var lru_key;
         for (var artist_id_key in fav_artists.items) {
-          if (fav_genres.items[artist_id_key].last_accessed < lru_time) {
+          if (fav_artists.items[artist_id_key].last_accessed < lru_time) {
             lru_time = fav_artists.items[artist_id_key].last_accessed;
             lru_key = artist_id_key;
           }
         }
-        delete fav_genres.items[artist_id_key];
+        delete fav_artists.items[artist_id_key];
         // TODO: Reset last_accessed values and global_counter by subtracting all by the lowest last_accessed value
       }
 
@@ -76,6 +104,10 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
       fav_artists.items[id] = { weight: 1, last_accessed: fav_artists.global_counter };
     }
   };
+
+  // Normalize incrementing values to reduce the chance of overflow:
+  fav_artists = normalizeIncrementingValues(fav_artists);
+  fav_genres = normalizeIncrementingValues(fav_genres);
 
   return { artist_pref: fav_artists, genres_pref: fav_genres };
 }
@@ -155,6 +187,7 @@ module.exports = {
       },
     };
 
+    console.log("Updated entity");
     console.log(updated_user_entity);
 
     await datastore.save(updated_user_entity);
