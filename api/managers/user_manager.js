@@ -9,6 +9,8 @@ const datastore = new Datastore({
 
 const SPOTIFY_UTILS = require('../utils/spotify_utils');
 const AXIOS = require('axios');
+
+// Max Size for all user fav_artists and fav_genres structures
 const MAX_SIZE = 50;
 
 /*/

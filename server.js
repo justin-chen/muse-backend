@@ -28,7 +28,7 @@ app.get('/api/hello', app_controller.helloWorld);
 
 app.post('/api/get_songs', spotify_controller.recommendedSongSelection)
 
-app.post('/api/has_enough_seed_data', spotify_controller.verifyEnoughData)
+app.get('/api/has_enough_seed_data', spotify_controller.verifyEnoughData)
 
 app.post('/api/sync_user_preferences', spotify_controller.updateUserSeeds)
 

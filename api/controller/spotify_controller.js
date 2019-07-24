@@ -178,7 +178,7 @@ module.exports = {
   },
 
   verifyEnoughData: async (req, res) => {
-    const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
+    const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
     if (spotify_user_data.error != null) return res.json(spotify_user_data);
 
     const response = await USER_MANAGER.verifyUserSeeds(spotify_user_data.email);
