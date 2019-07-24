@@ -10,8 +10,6 @@ const datastore = new Datastore({
   projectId: project_id,
 });
 
-// log in related API calls
-
 module.exports = {
   fetchAccessToken: async (uri, code) => {
     const options = {
@@ -32,6 +30,8 @@ module.exports = {
 
   registerUser: async (access_token) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(access_token);
+    if (spotify_user_data.error != null) throw spotify_user_data.error;
+
     const kind = 'User';
     const user_key = datastore.key([kind, spotify_user_data.email]);
     const query = datastore.createQuery(kind).filter('__key__', '=', user_key);

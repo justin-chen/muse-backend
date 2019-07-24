@@ -41,7 +41,7 @@ module.exports = {
 
       try {
         const { access_token, refresh_token } = await AUTH_MANAGER.fetchAccessToken(uri, code);
-        console.log(access_token);
+        console.log(access_token); // delete log statement eventually when no longer needed for development testing
         AUTH_MANAGER.registerUser(access_token);
         res.redirect('https://auth.expo.io/@j593chen/Muse#' +
           QUERYSTRING.stringify({
