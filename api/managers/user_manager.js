@@ -18,27 +18,18 @@ const MAX_SIZE = 50;
 /*   data_struct: Either fav_artists or fav_genres structures that have the appropriate structure for implementing LRU eviction policy
 /*
 /* Returns:
-/*   The modified data_struct where the global_counter and last_accessed of each item are subtracted by the lowest
-/*   last_accessed value, and weights of all items are divided by the lowest weight that is > 1 (n/1 = n and n/0 = undefined)
+/*   Modified data_struct where weights of all items are divided by the lowest weight that is > 1 (n/1 = n and n/0 = undefined)
 /*/
-normalizeIncrementingValues = (data_struct) => {
-  let lowest_lru_time = data_struct.global_counter // Must be at most global_counter
+normalizeItemWeights = (data_struct) => {
   let lowest_weight = Number.MAX_SAFE_INTEGER; // Should be some big int
 
-  for (var key in data_struct.items) {
-    if (data_struct.items[key].last_accessed < lowest_lru_time) lowest_lru_time = data_struct.items[key].last_accessed;
-
-    if (data_struct.items[key].weight < lowest_weight) lowest_weight = data_struct.items[key].weight;
-  }
-
-  data_struct.global_counter -= lowest_lru_time;
-  for (var key in data_struct.items) {
-    data_struct.items[key].last_accessed -= lowest_lru_time;
+  for (var key in data_struct) {
+    if (data_struct[key].weight < lowest_weight) lowest_weight = data_struct[key].weight;
   }
 
   if (lowest_weight > 1) {
-    for (var key in data_struct.items) {
-      data_struct.items[key].weight /= lowest_weight;
+    for (var key in data_struct) {
+      data_struct[key].weight = Math.floor(data_struct[key].weight/lowest_weight);
     }
   }
 
@@ -55,34 +46,35 @@ normalizeIncrementingValues = (data_struct) => {
 /*   the inserted key will replace a key in the structure that was accessed the least recently
 /*/
 insertWithLruPolicy = (data_struct, key) => {
-  // Start by incrementing global counter
-  data_struct.global_counter += 1;
+  // Mark current time on insert call
+  let current_time = Date.now();
 
-  // If key exists already, inc weight and update accessed time
+  // If key exists already, inc weight and update accessed time to current time
+  if (data_struct[key] != null) {
+    data_struct[key].weight += 1;
+    data_struct[key].last_accessed = current_time;
+    return data_struct;
+  }
+
   // Otherwise, need to add to the data_struct
-  if (data_struct.items[key] != null) {
-    data_struct.items[key].weight += 1;
-    data_struct.items[key].last_accessed = data_struct.global_counter;
-  } else {
+  if (Object.keys(data_struct).length >= MAX_SIZE) {
     // If there is no room in the data_struct, evict LRU item
-    if (Object.keys(data_struct.items).length >= MAX_SIZE) {
-      var lru_time = data_struct.global_counter;
-      var lru_key;
+    var lowest_timestamp = current_time;
+    var evict_key;
 
-      // To evict, go through all items in the data_struct and find the one with the lowest last_accessed value
-      for (var id_key in data_struct.items) {
-        if (data_struct.items[id_key].last_accessed < lru_time) {
-          lru_time = data_struct.items[id_key].last_accessed;
-          lru_key = id_key;
-        }
+    // To evict, go through all items in the data_struct and find the one with the least recent last_accessed timestamp
+    for (var id_key in data_struct) {
+      if (data_struct[id_key].last_accessed < lowest_timestamp) {
+        lowest_timestamp = data_struct[id_key].last_accessed;
+        evict_key = id_key;
       }
-
-      delete data_struct.items[id_key];
     }
 
-    // Should always have enough space in the data_struct here
-    data_struct.items[key] = { weight: 1, last_accessed: data_struct.global_counter };
+    delete data_struct[evict_key];
   }
+
+  // Should always have enough space in the data_struct here
+  data_struct[key] = { weight: 1, last_accessed: current_time };
 
   return data_struct;
 }
@@ -126,9 +118,9 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
     }
   }
 
-  // To avoid large values in the structures (to further decrease the unlikely chance of overflowing values)
-  fav_artists = normalizeIncrementingValues(fav_artists);
-  fav_genres = normalizeIncrementingValues(fav_genres);
+  // To avoid large weight values in the structures (to further decrease the unlikely chance of overflowing values)
+  fav_artists = normalizeItemWeights(fav_artists);
+  fav_genres = normalizeItemWeights(fav_genres);
 
   return { artist_pref: fav_artists, genres_pref: fav_genres };
 }
@@ -185,8 +177,8 @@ module.exports = {
     if (user_seeds.error != null) return user_seeds;
 
     // verify user has enough artists and genres for seeding
-    if (user_seeds.fav_artists != null && Object.keys(user_seeds.fav_artists.items).length >= 1) return { has_enough_data: true };
-    if (user_seeds.fav_genres != null && Object.keys(user_seeds.fav_genres.items).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_artists != null && Object.keys(user_seeds.fav_artists).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_genres != null && Object.keys(user_seeds.fav_genres).length >= 1) return { has_enough_data: true };
 
     // Does not have at least 1 genre or artist preference saved
     return { has_enough_data: false };
@@ -213,13 +205,13 @@ module.exports = {
     if (muse_user_data.fav_artists != null) {
       updated_fav_artists = muse_user_data.fav_artists;
     } else {
-      updated_fav_artists = { global_counter: 0, items: {} };
+      updated_fav_artists = {};
     }
 
     if (muse_user_data.fav_genres != null) {
       updated_fav_genres = muse_user_data.fav_genres;
     } else {
-      updated_fav_genres = { global_counter: 0, items: {} };
+      updated_fav_genres = {};
     }
 
     prefs = await updateArtistAndGenrePreferences(access_token, artist_ids, updated_fav_artists, updated_fav_genres);

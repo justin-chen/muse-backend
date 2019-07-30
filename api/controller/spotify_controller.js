@@ -72,11 +72,11 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 selectWeightedRandoms = (data_struct, max_size) => {
   let selectedRandoms = []
   let weight_sum = 0;
-  let total_size = Object.keys(data_struct.items).length; // original size of data_struct
+  let total_size = Object.keys(data_struct).length; // original size of data_struct
 
   // Sum up total weights of all items
-  for (let key in data_struct.items) {
-    weight_sum += data_struct.items[key].weight
+  for (let key in data_struct) {
+    weight_sum += data_struct[key].weight
   }
 
   // If the data_struct has more or equal items than max_size, loop while the number of selected is less than max_size
@@ -88,19 +88,19 @@ selectWeightedRandoms = (data_struct, max_size) => {
     var chosen_id;
 
     // For each item, sum their weights
-    for (var key in data_struct.items) {
-      curr_weight += data_struct.items[key].weight;
+    for (var key in data_struct) {
+      curr_weight += data_struct[key].weight;
       if (curr_weight > rand_weight) {
         // Select the current item when the total item weights so far is greater than random weight
         selectedRandoms.push(key);
         chosen_id = key;
-        weight_sum -= data_struct.items[key].weight;
+        weight_sum -= data_struct[key].weight;
         break;
       }
     }
 
     // Remove the added item from the pool
-    delete data_struct.items[chosen_id];
+    delete data_struct[chosen_id];
   }
 
   return selectedRandoms;
@@ -139,8 +139,16 @@ module.exports = {
     artist_seeds = artist_seeds.join(",");
     genre_seeds = genre_seeds.join(",");
 
+    let url = `https://api.spotify.com/v1/recommendations?limit=30&market=${user_country}&min_popularity=30`;
+    if (artist_seeds) {
+      url += `&seed_artists=${artist_seeds}`;
+    }
+    if (genre_seeds) {
+      url += `&seed_genres=${genre_seeds}`;
+    }
+
     const options = {
-      url: `https://api.spotify.com/v1/recommendations?limit=30&market=${user_country}&seed_artists=${artist_seeds}&seed_genres=${genre_seeds}&min_popularity=30`,
+      url: url,
       headers: { Authorization: `Bearer ${access_token}` },
     };
 
@@ -158,7 +166,7 @@ module.exports = {
           spotify_uri: track.uri,
           artist: track.artists[0].name,
           artist_id: track.artists[0].id,
-          artwork: track.album.images.length > 0 ? track.album.images[0].url : PLACEHOLDER_IMG,
+          artwork: track.album.images.length ? track.album.images[0].url : PLACEHOLDER_IMG,
           preview_url: track.preview_url,
         };
 
@@ -229,7 +237,7 @@ module.exports = {
             spotify_uri: item.track.uri,
             artist: item.track.artists[0].name,
             artist_id: item.track.artists[0].id,
-            artwork: item.track.album.images.length > 0 ? item.track.album.images[0].url : PLACEHOLDER_IMG,
+            artwork: item.track.album.images.length ? item.track.album.images[0].url : PLACEHOLDER_IMG,
             preview_url: item.track.preview_url,
           };
 
