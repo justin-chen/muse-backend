@@ -1,8 +1,8 @@
-const axios = require('axios');
-const user_manager = require('../managers/user_manager');
-const spotify_utils = require('../utils/spotify_utils');
-const dummy_id_placeholder = '!@#$%^&*()_';
-const placeholder_img = 'https://via.placeholder.com/650/8BE79A/ffffff?text=Muse';
+const AXIOS = require('axios');
+const USER_MANAGER = require('../managers/user_manager');
+const SPOTIFY_UTILS = require('../utils/spotify_utils');
+const DUMMY_ID = '!@#$%^&*()_';
+const PLACEHOLDER_IMG = 'https://via.placeholder.com/650/8BE79A/ffffff?text=Muse';
 
 function shuffle(list) {
   let max = list.length - 1;
@@ -40,7 +40,7 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
   let parsed_data;
 
   for (let i in objs) {
-    let obj_endpoint = endpoint.replace(dummy_id_placeholder, objs[i]);
+    let obj_endpoint = endpoint.replace(DUMMY_ID, objs[i]);
     let batch = [];
     continue_fetch = true;
     page = 0;
@@ -52,7 +52,7 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
         json: true
       };
 
-      api_res = await axios(fetch_options);
+      api_res = await AXIOS(fetch_options);
       parsed_data = callback(api_res);
 
       const items = parsed_data[0];
@@ -69,7 +69,136 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
   return result;
 }
 
+selectWeightedRandoms = (data_struct, max_size) => {
+  let selectedRandoms = []
+  let weight_sum = 0;
+  let total_size = Object.keys(data_struct).length; // original size of data_struct
+
+  // Sum up total weights of all items
+  for (let key in data_struct) {
+    weight_sum += data_struct[key].weight
+  }
+
+  // If the data_struct has more or equal items than max_size, loop while the number of selected is less than max_size
+  // If the data_struct has less items than max_size, loop while the number of selected is less than the number of items in data_struct
+  while ((total_size >= max_size && selectedRandoms.length < max_size) || (total_size < max_size && selectedRandoms.length < total_size)) {
+    // Pick a weight in range [0, weight_sum)
+    var rand_weight = Math.floor(Math.random() * (weight_sum));
+    var curr_weight = 0;
+    var chosen_id;
+
+    // For each item, sum their weights
+    for (var key in data_struct) {
+      curr_weight += data_struct[key].weight;
+      if (curr_weight > rand_weight) {
+        // Select the current item when the total item weights so far is greater than random weight
+        selectedRandoms.push(key);
+        chosen_id = key;
+        weight_sum -= data_struct[key].weight;
+        break;
+      }
+    }
+
+    // Remove the added item from the pool
+    delete data_struct[chosen_id];
+  }
+
+  return selectedRandoms;
+}
+
 module.exports = {
+  userSeedRecommendedSongSelection: async (req, res) => {
+    const { access_token, limit: max_result_tracks } = req.body;
+    const max_seed_list_size = 5;
+
+    const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
+    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+
+    const seeds = await USER_MANAGER.fetchUserSeeds(spotify_user_data.email);
+    if (seeds.error != null) return res.json(seeds);
+
+    let artist_seeds = selectWeightedRandoms(seeds.fav_artists, max_seed_list_size);
+    let genre_seeds = selectWeightedRandoms(seeds.fav_genres, max_seed_list_size);
+
+    // Combined the seeds, shuffle and pick 5
+    let combined_seeds = getRandomSublist(artist_seeds.concat(genre_seeds), 5);
+
+    // Now that we have the shuffled seeds, redistribute them back to their types so we know which ones are ids and which ones are genres
+    artist_seeds = [];
+    genre_seeds = [];
+    for (let i = 0; i < combined_seeds.length; i++) {
+      if (SPOTIFY_UTILS.isValidGenreSeed(combined_seeds[i])) {
+        genre_seeds.push(combined_seeds[i]);
+      } else {
+        artist_seeds.push(combined_seeds[i]);
+      }
+    }
+
+    // Make the seed recommendation api request
+    let user_country = spotify_user_data.country;
+    artist_seeds = artist_seeds.join(",");
+    genre_seeds = genre_seeds.join(",");
+
+    let url = `https://api.spotify.com/v1/recommendations?limit=30&market=${user_country}&min_popularity=30`;
+    if (artist_seeds) {
+      url += `&seed_artists=${artist_seeds}`;
+    }
+    if (genre_seeds) {
+      url += `&seed_genres=${genre_seeds}`;
+    }
+
+    const options = {
+      url: url,
+      headers: { Authorization: `Bearer ${access_token}` },
+    };
+
+    try {
+      const recommended_track_resp = await AXIOS(options);
+
+      let formatted_tracks = [];
+      recommended_track_resp.data.tracks.forEach(track => {
+        if (!track.preview_url) return;
+
+        let formatted_track = {};
+        let id = track.id;
+        let value = {
+          name: track.name,
+          spotify_uri: track.uri,
+          artist: track.artists[0].name,
+          artist_id: track.artists[0].id,
+          artwork: track.album.images.length ? track.album.images[0].url : PLACEHOLDER_IMG,
+          preview_url: track.preview_url,
+        };
+
+        formatted_track[id] = value;
+        formatted_tracks.push(formatted_track);
+      })
+
+      formatted_tracks = getRandomSublist(formatted_tracks, max_result_tracks);
+      res.json(mergeObjects(formatted_tracks));
+    } catch (error) {
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      } else {
+        return res.status(400).json({ error: error });
+      }
+    }
+  },
+
+  verifyEnoughData: async (req, res) => {
+    const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
+    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+
+    const response = await USER_MANAGER.verifyUserSeeds(spotify_user_data.email);
+    return res.json(response);
+  },
+
+  updateUserSeeds: async (req, res) => {
+    let { access_token, artist_ids } = req.body;
+    let response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
+    res.json(response);
+  },
+
   recommendedSongSelection: async (req, res) => {
     let { access_token, categories, limit: max_result_tracks } = req.body;
     const max_playlists_per_category = 1;
@@ -77,14 +206,14 @@ module.exports = {
     let tracks = [];
 
     if (categories.length < 1) {
-      categories = spotify_utils.getCategories();
+      categories = SPOTIFY_UTILS.getCategories();
     }
 
     try {
-      const user_data = await user_manager.fetchUserData(access_token);
+      const user_data = await USER_MANAGER.fetchUserData(access_token);
       const user_country = user_data.country;
-      const category_endpoint = `https://api.spotify.com/v1/browse/categories/${dummy_id_placeholder}/playlists?country=${user_country}&`;
-      const playlist_endpoint = `https://api.spotify.com/v1/playlists/${dummy_id_placeholder}/tracks?market=${user_country}&`;
+      const category_endpoint = `https://api.spotify.com/v1/browse/categories/${DUMMY_ID}/playlists?country=${user_country}&`;
+      const playlist_endpoint = `https://api.spotify.com/v1/playlists/${DUMMY_ID}/tracks?market=${user_country}&`;
 
       let playlists = await bulkFetchRandomizedItems(category_endpoint, access_token, categories, max_playlists_per_category, (response) => {
         let res_data = response.data;
@@ -108,7 +237,7 @@ module.exports = {
             spotify_uri: item.track.uri,
             artist: item.track.artists[0].name,
             artist_id: item.track.artists[0].id,
-            artwork: item.track.album.images.length > 0 ? item.track.album.images[0].url : placeholder_img,
+            artwork: item.track.album.images.length ? item.track.album.images[0].url : PLACEHOLDER_IMG,
             preview_url: item.track.preview_url,
           };
 
@@ -123,8 +252,7 @@ module.exports = {
       if (error.response) {
         return res.status(error.response.status).json(error.response.data);
       } else {
-        // Should log error somewhere
-        return res.status(400).json({ error: 'Request to Spotify API failed' });
+        return res.status(400).json({ error: error });
       }
     }
 
