@@ -70,6 +70,10 @@ async function bulkFetchRandomizedItems(endpoint, access_token, objs, batch_limi
 }
 
 selectWeightedRandoms = (data_struct, max_size) => {
+  if (data_struct == null) {
+    return [];
+  }
+
   let selectedRandoms = []
   let weight_sum = 0;
   let total_size = Object.keys(data_struct).length; // original size of data_struct
