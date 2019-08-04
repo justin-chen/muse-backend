@@ -16,7 +16,7 @@ module.exports = {
     const state = SPOTIFY_UTILS.generateRandomString(16);
     res.cookie(STATE_KEY, state);
 
-    const scope = 'user-read-private user-read-email user-top-read playlist-read-private playlist-modify-private playlist-modify-public';
+    const scope = 'user-read-private user-follow-read user-read-email user-top-read playlist-read-private playlist-modify-private playlist-modify-public';
     res.redirect('https://accounts.spotify.com/authorize?' +
       QUERYSTRING.stringify({
         response_type: 'code',
