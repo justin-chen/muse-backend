@@ -216,7 +216,8 @@ module.exports = {
   },
 
   updateUserSeeds: async (req, res) => {
-    const { access_token, artist_ids } = req.body;
+    let { access_token, artist_ids } = req.body;
+    artist_ids = getRandomSublist(artist_ids, 100);
     const response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
     res.json(response);
   },
