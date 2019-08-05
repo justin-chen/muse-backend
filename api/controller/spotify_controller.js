@@ -171,7 +171,7 @@ module.exports = {
           artists: track.artists.map(artist => artist.name),
           artist_id: track.artists[0].id,
           album: item.track.album.name,
-          artwork: track.album.images.length ? track.album.images[0].url : PLACEHOLDER_IMG,
+          artwork: track.album.images.length ? track.album.images : PLACEHOLDER_IMG,
           preview_url: track.preview_url,
         };
 
@@ -259,7 +259,7 @@ module.exports = {
             artists: item.track.artists.map(artist => artist.name),
             artist_id: item.track.artists[0].id,
             album: item.track.album.name,
-            artwork: item.track.album.images.length ? item.track.album.images[0].url : PLACEHOLDER_IMG,
+            artwork: item.track.album.images.length ? item.track.album.images : PLACEHOLDER_IMG,
             preview_url: item.track.preview_url,
           };
 
