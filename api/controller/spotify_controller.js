@@ -170,7 +170,7 @@ module.exports = {
           spotify_uri: track.uri,
           artists: track.artists.map(artist => artist.name),
           artist_id: track.artists[0].id,
-          album: item.track.album.name,
+          album: track.album.name,
           artwork: track.album.images.length ? track.album.images.map(image => image.url) : [PLACEHOLDER_IMG],
           preview_url: track.preview_url,
         };
@@ -182,6 +182,7 @@ module.exports = {
       formatted_tracks = getRandomSublist(formatted_tracks, max_result_tracks);
       res.json(mergeObjects(formatted_tracks));
     } catch (error) {
+      console.log(error);
       if (error.response) {
         return res.status(error.response.status).json(error.response.data);
       } else {
@@ -271,6 +272,7 @@ module.exports = {
         return [formatted_items, next];
       });
     } catch (error) {
+      console.log(error);
       if (error.response) {
         return res.status(error.response.status).json(error.response.data);
       } else {
