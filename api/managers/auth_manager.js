@@ -43,6 +43,7 @@ module.exports = {
         key: user_key,
         data: {
           country: spotify_user_data.country,
+          is_new_user: true,
         },
       };
       await datastore.save(new_user_entity);

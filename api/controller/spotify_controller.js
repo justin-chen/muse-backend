@@ -197,6 +197,22 @@ module.exports = {
     return res.json(response);
   },
 
+  isNewUser: async (req, res) => {
+    const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
+    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+
+    const response = await USER_MANAGER.isNewUser(spotify_user_data.email);
+    return res.json(response);
+  },
+
+  syncedNewUser: async (req, res) => {
+    const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
+    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+
+    const response = await USER_MANAGER.syncedNewUser(spotify_user_data.email);
+    return res.json(response);
+  },
+
   updateUserSeeds: async (req, res) => {
     let { access_token, artist_ids } = req.body;
     let response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);

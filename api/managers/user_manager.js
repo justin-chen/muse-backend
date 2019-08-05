@@ -149,11 +149,11 @@ module.exports = {
     }
   },
 
-  // Get user seed preference from datastore
+  // Get user data from datastore
   // Returns:
-  //   On success: JSON containing fav_artist and fav_genre data from datastore
+  //   On success: JSON containing data key
   //   On failure: JSON containing error key
-  fetchUserSeeds: async (user_email) => {
+  fetchUserDatastoreData: async (user_email) => {
     const kind = 'User';
     const user_key = datastore.key([kind, user_email]);
     const query = datastore.createQuery(kind).filter('__key__', '=', user_key);
@@ -162,10 +162,21 @@ module.exports = {
     try {
       const query_resp = await datastore.runQuery(query);
       muse_user_data = query_resp[0][0];
-      return { fav_artists: muse_user_data.fav_artists, fav_genres: muse_user_data.fav_genres };
+      return { data: muse_user_data };
     } catch (error) {
       return { error: error };
     }
+  },
+
+  // Get user seed preference from datastore
+  // Returns:
+  //   On success: JSON containing fav_artist and fav_genre data from datastore
+  //   On failure: JSON containing error key
+  fetchUserSeeds: async (user_email) => {
+    const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
+    if (muse_user_data.error != null) return muse_user_data;
+
+    return { fav_artists: muse_user_data.data.fav_artists, fav_genres: muse_user_data.data.fav_genres };
   },
 
   // Check if user has enough seed values for seed recommendation
@@ -182,6 +193,44 @@ module.exports = {
 
     // Does not have at least 1 genre or artist preference saved
     return { has_enough_data: false };
+  },
+
+  // Check if user is a new user
+  // Returns:
+  //   On success: JSON containing is_new_user key with the value of true or false
+  //   On failure: JSON containing error key
+  isNewUser: async (user_email) => {
+    const user_data = await module.exports.fetchUserDatastoreData(user_email);
+    if (user_data.error != null) return user_data;
+
+    return { is_new_user: user_data.data.is_new_user };
+  },
+
+  // Update a user as a non new user
+  // Returns:
+  //   On success: JSON containing the key "updated"
+  //   On failure: JSON containing the key "error"
+  syncedNewUser: async (user_email) => {
+    const kind = 'User';
+    const user_key = datastore.key([kind, user_email]);
+    const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
+
+    var updated_user_entity = {
+      key: user_key,
+      data: {
+        fav_artists: muse_user_data.data.fav_artists,
+        fav_genres: muse_user_data.data.fav_genres,
+        country: muse_user_data.data.country,
+        is_new_user: false,
+      },
+    };
+
+    try {
+      await datastore.save(updated_user_entity);
+      return { updated: true };
+    } catch (error) {
+      return { error: error };
+    }
   },
 
   // Create or update the artist and genre seeds for the current user
@@ -223,6 +272,7 @@ module.exports = {
         fav_artists: prefs.artist_pref,
         fav_genres: prefs.genres_pref,
         country: muse_user_data.country,
+        is_new_user: muse_user_data.is_new_user,
       },
     };
 

@@ -26,12 +26,16 @@ app.get('/api/refresh_token', auth_controller.refreshToken);
 
 app.get('/api/hello', app_controller.helloWorld);
 
-app.post('/api/get_songs', spotify_controller.recommendedSongSelection)
+app.post('/api/get_songs', spotify_controller.recommendedSongSelection);
 
-app.get('/api/has_enough_seed_data', spotify_controller.verifyEnoughData)
+app.get('/api/has_enough_seed_data', spotify_controller.verifyEnoughData);
 
-app.post('/api/sync_user_preferences', spotify_controller.updateUserSeeds)
+app.post('/api/sync_user_preferences', spotify_controller.updateUserSeeds);
 
-app.post('/api/get_songs_from_user_pref', spotify_controller.userSeedRecommendedSongSelection)
+app.post('/api/get_songs_from_user_pref', spotify_controller.userSeedRecommendedSongSelection);
+
+app.get('/api/is_new_user', spotify_controller.isNewUser);
+
+app.post('/api/synced_new_user', spotify_controller.syncedNewUser);
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
