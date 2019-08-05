@@ -221,7 +221,7 @@ module.exports = {
   },
 
   recommendedSongSelection: async (req, res) => {
-    const { access_token, categories, limit: max_result_tracks } = req.body;
+    let { access_token, categories, limit: max_result_tracks } = req.body;
     const max_playlists_per_category = 1;
     const max_tracks_per_playlist = 10;
     let tracks = [];
