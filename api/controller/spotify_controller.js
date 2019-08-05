@@ -168,7 +168,7 @@ module.exports = {
         let value = {
           name: track.name,
           spotify_uri: track.uri,
-          artist: track.artists[0].name,
+          artists: track.artists.map(artist => artist.name),
           artist_id: track.artists[0].id,
           artwork: track.album.images.length ? track.album.images[0].url : PLACEHOLDER_IMG,
           preview_url: track.preview_url,
@@ -214,13 +214,13 @@ module.exports = {
   },
 
   updateUserSeeds: async (req, res) => {
-    let { access_token, artist_ids } = req.body;
-    let response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
+    const { access_token, artist_ids } = req.body;
+    const response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
     res.json(response);
   },
 
   recommendedSongSelection: async (req, res) => {
-    let { access_token, categories, limit: max_result_tracks } = req.body;
+    const { access_token, categories, limit: max_result_tracks } = req.body;
     const max_playlists_per_category = 1;
     const max_tracks_per_playlist = 10;
     let tracks = [];
@@ -244,7 +244,7 @@ module.exports = {
 
       tracks = await bulkFetchRandomizedItems(playlist_endpoint, access_token, playlists, max_tracks_per_playlist, (response) => {
         let res_data = response.data;
-        let formatted_items = []
+        let formatted_items = [];
 
         res_data.items.forEach(item => {
           if (!item.track) return;
@@ -255,7 +255,7 @@ module.exports = {
           let value = {
             name: item.track.name,
             spotify_uri: item.track.uri,
-            artist: item.track.artists[0].name,
+            artists: item.track.artists.map(artist => artist.name),
             artist_id: item.track.artists[0].id,
             artwork: item.track.album.images.length ? item.track.album.images[0].url : PLACEHOLDER_IMG,
             preview_url: item.track.preview_url,
