@@ -18,6 +18,18 @@ function shuffle(list) {
   return list;
 }
 
+function splitList(list, chunkSize) {
+  if (chunkSize == 0) return [];
+
+  let chunks = [];
+  let i = 0;
+  while (i < list.length) {
+    chunks.push(list.slice(i, i += chunkSize));
+  }
+
+  return chunks;
+}
+
 // return a random sublist with size up to limit
 function getRandomSublist(list, limit) {
   list = shuffle(list);
@@ -217,7 +229,7 @@ module.exports = {
 
   updateUserSeeds: async (req, res) => {
     let { access_token, artist_ids } = req.body;
-    artist_ids = getRandomSublist(artist_ids, 200);
+    artist_ids = splitList(artist_ids, 50);
     const response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
     res.json(response);
   },

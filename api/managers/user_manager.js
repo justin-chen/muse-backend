@@ -91,23 +91,27 @@ insertWithLruPolicy = (data_struct, key) => {
 /*/
 updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, fav_genres) => {
   for (let i = 0; i < artist_ids.length; i++) {
-    id = artist_ids[i];
+    artist_ids_chunk = artist_ids[i];
 
     const options = {
-      url: `https://api.spotify.com/v1/artists/${id}`,
+      url: `https://api.spotify.com/v1/artists?ids=${artist_ids_chunk.join(",")}`,
       headers: { Authorization: `Bearer ${access_token}` },
     };
 
     try {
-      const artist_resp = await AXIOS(options);
+      const artist_chunk_resp = await AXIOS(options);
+      for (let j = 0; j < artist_chunk_resp.data.artists.length; j++) {
+        const artist_resp = artist_chunk_resp.data.artists[j];
+        const id = artist_chunk_resp.data.artists[j].id;
 
-      var related_genres = artist_resp.data.genres;
-      related_genres.forEach(genre => {
-        if (!SPOTIFY_UTILS.isValidGenreSeed(genre)) return;
-        fav_genres = insertWithLruPolicy(fav_genres, genre);
-      });
+        const related_genres = artist_resp.genres;
+        related_genres.forEach(genre => {
+          if (!SPOTIFY_UTILS.isValidGenreSeed(genre)) return;
+          fav_genres = insertWithLruPolicy(fav_genres, genre);
+        });
 
-      fav_artists = insertWithLruPolicy(fav_artists, id);
+        fav_artists = insertWithLruPolicy(fav_artists, id);
+      }
     } catch (error) {
       if (error.response) {
         return error.response.data;
