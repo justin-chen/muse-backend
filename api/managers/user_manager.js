@@ -217,47 +217,6 @@ module.exports = {
     return { last_synced_with_spotify: user_data.data.last_synced_with_spotify };
   },
 
-  // Check if user is a new user
-  // Returns:
-  //   On success: JSON containing is_new_user key with the value of true or false
-  //   On failure: JSON containing error key
-  isNewUser: async (user_email) => {
-    const user_data = await module.exports.fetchUserDatastoreData(user_email);
-    if (user_data.error != null) return user_data;
-
-    return { is_new_user: user_data.data.is_new_user };
-  },
-
-  // Update a user as a non new user
-  // Returns:
-  //   On success: JSON containing the key "updated"
-  //   On failure: JSON containing the key "error"
-  syncedNewUser: async (user_email) => {
-    const kind = 'User';
-    const user_key = datastore.key([kind, user_email]);
-    const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
-
-    var updated_user_entity = {
-      key: user_key,
-      data: {
-        fav_artists: muse_user_data.data.fav_artists,
-        fav_genres: muse_user_data.data.fav_genres,
-        spotify_fav_artists: muse_user_data.spotify_fav_artists,
-        spotify_fav_genres: muse_user_data.spotify_fav_genres,
-        country: muse_user_data.data.country,
-        is_new_user: false,
-        last_synced_with_spotify: muse_user_data.data.last_synced_with_spotify,
-      },
-    };
-
-    try {
-      await datastore.save(updated_user_entity);
-      return { updated: true };
-    } catch (error) {
-      return { error: error };
-    }
-  },
-
   // Create or update the muse or spotify artist and genre seeds for the current user
   // Returns:
   //   On success: JSON containing the key "updated"
