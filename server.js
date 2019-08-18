@@ -34,6 +34,8 @@ app.post('/api/sync_user_preferences', spotify_controller.updateUserSeeds);
 
 app.post('/api/get_songs_from_user_pref', spotify_controller.userSeedRecommendedSongSelection);
 
+app.get('/api/last_synced_with_spotify', spotify_controller.lastSyncedWithSpotify);
+
 app.get('/api/is_new_user', spotify_controller.isNewUser);
 
 app.post('/api/synced_new_user', spotify_controller.syncedNewUser);
