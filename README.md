@@ -1,14 +1,23 @@
-# Music Discovery
-## Install dependencies
+# Muse Backend
+Backend Server for the Muse application
+
+## Getting Started
+### Install dependencies
 ```
 npm i
 ```
-## Bundling React client
-cd into client
+### Running server locally
 ```
-npm run build
+node server
 ```
-## Running server (nodemon)
-```
-npm run dev
-```
+
+## Built Using
+- [Spotify Web API](https://developer.spotify.com/documentation/web-api/)
+- [Express](https://expressjs.com/)
+- [GCP App Engine](https://cloud.google.com/appengine/)
+- [Cloud Datastore](https://cloud.google.com/datastore/)
+
+## Authors
+- [Justin Chen](https://github.com/justin-chen)
+- [Justin Oue](https://github.com/jkcoue)
+
