@@ -30,7 +30,7 @@ module.exports = {
 
   registerUser: async (access_token) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(access_token);
-    if (spotify_user_data.error != null) throw spotify_user_data.error;
+    if (spotify_user_data.error) throw spotify_user_data.error;
 
     const kind = 'User';
     const user_key = datastore.key([kind, spotify_user_data.email]);
@@ -44,6 +44,11 @@ module.exports = {
         data: {
           country: spotify_user_data.country,
           is_new_user: true,
+          last_synced_with_spotify: 0, // so that first personalized session will always pass timestamp check to sync
+          spotify_fav_artists: {},
+          spotify_fav_genres: {},
+          fav_artists: {},
+          fav_genres: {},
         },
       };
       await datastore.save(new_user_entity);

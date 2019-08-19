@@ -50,7 +50,7 @@ insertWithLruPolicy = (data_struct, key) => {
   let current_time = Date.now();
 
   // If key exists already, inc weight and update accessed time to current time
-  if (data_struct[key] != null) {
+  if (data_struct[key]) {
     data_struct[key].weight += 1;
     data_struct[key].last_accessed = current_time;
     return data_struct;
@@ -126,7 +126,7 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
   fav_artists = normalizeItemWeights(fav_artists);
   fav_genres = normalizeItemWeights(fav_genres);
 
-  return { artist_pref: fav_artists, genres_pref: fav_genres };
+  return { artists_pref: fav_artists, genres_pref: fav_genres };
 }
 
 module.exports = {
@@ -178,9 +178,14 @@ module.exports = {
   //   On failure: JSON containing error key
   fetchUserSeeds: async (user_email) => {
     const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
-    if (muse_user_data.error != null) return muse_user_data;
+    if (muse_user_data.error) return muse_user_data;
 
-    return { fav_artists: muse_user_data.data.fav_artists, fav_genres: muse_user_data.data.fav_genres };
+    return {
+      fav_artists: muse_user_data.data.fav_artists,
+      fav_genres: muse_user_data.data.fav_genres,
+      spotify_fav_artists: muse_user_data.data.spotify_fav_artists,
+      spotify_fav_genres: muse_user_data.data.spotify_fav_genres,
+    };
   },
 
   // Check if user has enough seed values for seed recommendation
@@ -189,94 +194,67 @@ module.exports = {
   //   On failure: JSON containing error key
   verifyUserSeeds: async (user_email) => {
     const user_seeds = await module.exports.fetchUserSeeds(user_email);
-    if (user_seeds.error != null) return user_seeds;
+    if (user_seeds.error) return user_seeds;
 
     // verify user has enough artists and genres for seeding
-    if (user_seeds.fav_artists != null && Object.keys(user_seeds.fav_artists).length >= 1) return { has_enough_data: true };
-    if (user_seeds.fav_genres != null && Object.keys(user_seeds.fav_genres).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_artists && Object.keys(user_seeds.fav_artists).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_genres && Object.keys(user_seeds.fav_genres).length >= 1) return { has_enough_data: true };
+    if (user_seeds.spotify_fav_artists && Object.keys(user_seeds.spotify_fav_artists).length >= 1) return { has_enough_data: true };
+    if (user_seeds.spotify_fav_genres && Object.keys(user_seeds.spotify_fav_genres).length >= 1) return { has_enough_data: true };
 
     // Does not have at least 1 genre or artist preference saved
     return { has_enough_data: false };
   },
 
-  // Check if user is a new user
+  // Check for the timestamp where the user was last synced with their Spotify preferences
   // Returns:
-  //   On success: JSON containing is_new_user key with the value of true or false
+  //   On success: JSON containing last_synced_with_spotify key with a timestamp
   //   On failure: JSON containing error key
-  isNewUser: async (user_email) => {
+  lastSyncedWithSpotify: async (user_email) => {
     const user_data = await module.exports.fetchUserDatastoreData(user_email);
-    if (user_data.error != null) return user_data;
+    if (user_data.error) return user_data;
 
-    return { is_new_user: user_data.data.is_new_user };
+    return { last_synced_with_spotify: user_data.data.last_synced_with_spotify };
   },
 
-  // Update a user as a non new user
+  // Create or update the muse or spotify artist and genre seeds for the current user
   // Returns:
   //   On success: JSON containing the key "updated"
   //   On failure: JSON containing the key "error"
-  syncedNewUser: async (user_email) => {
-    const kind = 'User';
-    const user_key = datastore.key([kind, user_email]);
-    const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
-
-    var updated_user_entity = {
-      key: user_key,
-      data: {
-        fav_artists: muse_user_data.data.fav_artists,
-        fav_genres: muse_user_data.data.fav_genres,
-        country: muse_user_data.data.country,
-        is_new_user: false,
-      },
-    };
-
-    try {
-      await datastore.save(updated_user_entity);
-      return { updated: true };
-    } catch (error) {
-      return { error: error };
-    }
-  },
-
-  // Create or update the artist and genre seeds for the current user
-  // Returns:
-  //   On success: JSON containing the key "updated"
-  //   On failure: JSON containing the key "error"
-  updateUserSeeds: async (access_token, artist_ids) => {
+  updateUserSeeds: async (access_token, artist_ids, type) => {
     const spotify_user_data = await module.exports.fetchUserData(access_token);
-    if (spotify_user_data.error != null) return spotify_user_data;
+    if (spotify_user_data.error) return spotify_user_data;
 
     const kind = 'User';
     const user_key = datastore.key([kind, spotify_user_data.email]);
     const query = datastore.createQuery(kind).filter('__key__', '=', user_key);
     const query_resp = await datastore.runQuery(query);
 
-    let muse_user_data = query_resp[0][0]
-
+    let muse_user_data = query_resp[0][0];
     let updated_fav_artists = null;
     let updated_fav_genres = null;
 
-    if (muse_user_data.fav_artists != null) {
+    if (type === "muse") {
       updated_fav_artists = muse_user_data.fav_artists;
-    } else {
-      updated_fav_artists = {};
-    }
-
-    if (muse_user_data.fav_genres != null) {
       updated_fav_genres = muse_user_data.fav_genres;
-    } else {
+    } else if (type === "spotify") { // Wipe existing spotify preference before re-syncing
+      updated_fav_artists = {};
       updated_fav_genres = {};
     }
 
     prefs = await updateArtistAndGenrePreferences(access_token, artist_ids, updated_fav_artists, updated_fav_genres);
-    if (prefs.error != null) return prefs;
+    if (prefs.error) return prefs;
 
     var updated_user_entity = {
       key: user_key,
       data: {
-        fav_artists: prefs.artist_pref,
-        fav_genres: prefs.genres_pref,
+        fav_artists: type === "muse" ? prefs.artists_pref : muse_user_data.fav_artists,
+        fav_genres: type === "muse" ? prefs.genres_pref : muse_user_data.fav_genres,
+        spotify_fav_artists: type === "muse" ? muse_user_data.spotify_fav_artists : prefs.artists_pref,
+        spotify_fav_genres: type === "muse" ? muse_user_data.spotify_fav_genres: prefs.genres_pref,
         country: muse_user_data.country,
         is_new_user: muse_user_data.is_new_user,
+        last_synced_with_spotify: type === "muse" ? muse_user_data.last_synced_with_spotify : Date.now(),
       },
     };
 

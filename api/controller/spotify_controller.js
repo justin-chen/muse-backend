@@ -122,19 +122,38 @@ selectWeightedRandoms = (data_struct, max_size) => {
   return selectedRandoms;
 }
 
+mergeSeedObjs = (obj1, obj2) => {
+  let merged = {};
+
+  for (var key in obj1) {
+    if (obj2[key] == null) { // keys in obj1 not in obj2
+      merged[key] = obj1[key];
+    } else { // keys in obj1 and obj2
+      let merged_weight = obj1[key].weight + obj2[key].weight;
+      let merged_value = { weight: merged_weight, last_accessed: 0 };
+      merged[key] = merged_value;
+    }
+  }
+
+  return {...obj2, ...merged}; // keys in obj2 and not obj1
+}
+
 module.exports = {
   userSeedRecommendedSongSelection: async (req, res) => {
     const { access_token, limit: max_result_tracks } = req.body;
-    const max_seed_list_size = 5;
+    const max_seed_list_size = 5; // the max number of seeds that Spotify API will take
 
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
     const seeds = await USER_MANAGER.fetchUserSeeds(spotify_user_data.email);
-    if (seeds.error != null) return res.json(seeds);
+    if (seeds.error) return res.json(seeds);
 
-    let artist_seeds = selectWeightedRandoms(seeds.fav_artists, max_seed_list_size);
-    let genre_seeds = selectWeightedRandoms(seeds.fav_genres, max_seed_list_size);
+    let merged_fav_artists = mergeSeedObjs(seeds.fav_artists, seeds.spotify_fav_artists);
+    let merged_fav_genres = mergeSeedObjs(seeds.fav_genres, seeds.spotify_fav_genres);
+
+    let artist_seeds = selectWeightedRandoms(merged_fav_artists, max_seed_list_size);
+    let genre_seeds = selectWeightedRandoms(merged_fav_genres, max_seed_list_size);
 
     // Combined the seeds, shuffle and pick 5
     let combined_seeds = getRandomSublist(artist_seeds.concat(genre_seeds), 5);
@@ -205,32 +224,28 @@ module.exports = {
 
   verifyEnoughData: async (req, res) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
     const response = await USER_MANAGER.verifyUserSeeds(spotify_user_data.email);
     return res.json(response);
   },
 
-  isNewUser: async (req, res) => {
+  lastSyncedWithSpotify: async (req, res) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
-    const response = await USER_MANAGER.isNewUser(spotify_user_data.email);
-    return res.json(response);
-  },
-
-  syncedNewUser: async (req, res) => {
-    const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
-
-    const response = await USER_MANAGER.syncedNewUser(spotify_user_data.email);
+    const response = await USER_MANAGER.lastSyncedWithSpotify(spotify_user_data.email);
     return res.json(response);
   },
 
   updateUserSeeds: async (req, res) => {
-    let { access_token, artist_ids } = req.body;
+    let { access_token, artist_ids, type } = req.body;
+    if (type !== "muse" && type !== "spotify") {
+      res.json({error: 'Invalid type provided'});
+    }
+
     artist_ids = splitList(artist_ids, 50);
-    const response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids);
+    const response = await USER_MANAGER.updateUserSeeds(access_token, artist_ids, type);
     res.json(response);
   },
 
