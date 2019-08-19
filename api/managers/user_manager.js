@@ -50,7 +50,7 @@ insertWithLruPolicy = (data_struct, key) => {
   let current_time = Date.now();
 
   // If key exists already, inc weight and update accessed time to current time
-  if (data_struct[key] != null) {
+  if (data_struct[key]) {
     data_struct[key].weight += 1;
     data_struct[key].last_accessed = current_time;
     return data_struct;
@@ -178,7 +178,7 @@ module.exports = {
   //   On failure: JSON containing error key
   fetchUserSeeds: async (user_email) => {
     const muse_user_data = await module.exports.fetchUserDatastoreData(user_email);
-    if (muse_user_data.error != null) return muse_user_data;
+    if (muse_user_data.error) return muse_user_data;
 
     return {
       fav_artists: muse_user_data.data.fav_artists,
@@ -194,13 +194,13 @@ module.exports = {
   //   On failure: JSON containing error key
   verifyUserSeeds: async (user_email) => {
     const user_seeds = await module.exports.fetchUserSeeds(user_email);
-    if (user_seeds.error != null) return user_seeds;
+    if (user_seeds.error) return user_seeds;
 
     // verify user has enough artists and genres for seeding
-    if (user_seeds.fav_artists != null && Object.keys(user_seeds.fav_artists).length >= 1) return { has_enough_data: true };
-    if (user_seeds.fav_genres != null && Object.keys(user_seeds.fav_genres).length >= 1) return { has_enough_data: true };
-    if (user_seeds.spotify_fav_artists != null && Object.keys(user_seeds.spotify_fav_artists).length >= 1) return { has_enough_data: true };
-    if (user_seeds.spotify_fav_genres != null && Object.keys(user_seeds.spotify_fav_genres).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_artists && Object.keys(user_seeds.fav_artists).length >= 1) return { has_enough_data: true };
+    if (user_seeds.fav_genres && Object.keys(user_seeds.fav_genres).length >= 1) return { has_enough_data: true };
+    if (user_seeds.spotify_fav_artists && Object.keys(user_seeds.spotify_fav_artists).length >= 1) return { has_enough_data: true };
+    if (user_seeds.spotify_fav_genres && Object.keys(user_seeds.spotify_fav_genres).length >= 1) return { has_enough_data: true };
 
     // Does not have at least 1 genre or artist preference saved
     return { has_enough_data: false };
@@ -212,7 +212,7 @@ module.exports = {
   //   On failure: JSON containing error key
   lastSyncedWithSpotify: async (user_email) => {
     const user_data = await module.exports.fetchUserDatastoreData(user_email);
-    if (user_data.error != null) return user_data;
+    if (user_data.error) return user_data;
 
     return { last_synced_with_spotify: user_data.data.last_synced_with_spotify };
   },
@@ -223,7 +223,7 @@ module.exports = {
   //   On failure: JSON containing the key "error"
   updateUserSeeds: async (access_token, artist_ids, type) => {
     const spotify_user_data = await module.exports.fetchUserData(access_token);
-    if (spotify_user_data.error != null) return spotify_user_data;
+    if (spotify_user_data.error) return spotify_user_data;
 
     const kind = 'User';
     const user_key = datastore.key([kind, spotify_user_data.email]);
@@ -243,7 +243,7 @@ module.exports = {
     }
 
     prefs = await updateArtistAndGenrePreferences(access_token, artist_ids, updated_fav_artists, updated_fav_genres);
-    if (prefs.error != null) return prefs;
+    if (prefs.error) return prefs;
 
     var updated_user_entity = {
       key: user_key,

@@ -135,13 +135,7 @@ mergeSeedObjs = (obj1, obj2) => {
     }
   }
 
-  for (var key in obj2) { // keys in obj2 not in obj1
-    if (obj1[key] == null) {
-      merged[key] = obj2[key];
-    }
-  }
-
-  return merged;
+  return {...obj2, ...merged}; // keys in obj2 and not obj1
 }
 
 module.exports = {
@@ -150,10 +144,10 @@ module.exports = {
     const max_seed_list_size = 5; // the max number of seeds that Spotify API will take
 
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.body.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
     const seeds = await USER_MANAGER.fetchUserSeeds(spotify_user_data.email);
-    if (seeds.error != null) return res.json(seeds);
+    if (seeds.error) return res.json(seeds);
 
     let merged_fav_artists = mergeSeedObjs(seeds.fav_artists, seeds.spotify_fav_artists);
     let merged_fav_genres = mergeSeedObjs(seeds.fav_genres, seeds.spotify_fav_genres);
@@ -230,7 +224,7 @@ module.exports = {
 
   verifyEnoughData: async (req, res) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
     const response = await USER_MANAGER.verifyUserSeeds(spotify_user_data.email);
     return res.json(response);
@@ -238,7 +232,7 @@ module.exports = {
 
   lastSyncedWithSpotify: async (req, res) => {
     const spotify_user_data = await USER_MANAGER.fetchUserData(req.query.access_token);
-    if (spotify_user_data.error != null) return res.json(spotify_user_data);
+    if (spotify_user_data.error) return res.json(spotify_user_data);
 
     const response = await USER_MANAGER.lastSyncedWithSpotify(spotify_user_data.email);
     return res.json(response);
