@@ -1,5 +1,5 @@
 # Muse Backend
-Backend Server for the Muse application
+Backend Server for [Muse](https://github.com/justin-chen/muse)
 
 ## Getting Started
 ### Install dependencies
