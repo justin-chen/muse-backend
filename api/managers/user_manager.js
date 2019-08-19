@@ -253,7 +253,6 @@ module.exports = {
         spotify_fav_artists: type === "muse" ? muse_user_data.spotify_fav_artists : prefs.artists_pref,
         spotify_fav_genres: type === "muse" ? muse_user_data.spotify_fav_genres: prefs.genres_pref,
         country: muse_user_data.country,
-        is_new_user: muse_user_data.is_new_user,
         last_synced_with_spotify: type === "muse" ? muse_user_data.last_synced_with_spotify : Date.now(),
       },
     };
