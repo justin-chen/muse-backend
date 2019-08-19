@@ -89,7 +89,7 @@ insertWithLruPolicy = (data_struct, key) => {
 /*   On success: JSON containing updated fav_artists and fav_genres based on the given artist_ids
 /*   On failure: JSON containing error message
 /*/
-updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, fav_genres) => {
+updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, fav_genres, type) => {
   for (let i = 0; i < artist_ids.length; i++) {
     artist_ids_chunk = artist_ids[i];
 
@@ -123,8 +123,11 @@ updateArtistAndGenrePreferences = async (access_token, artist_ids, fav_artists, 
   }
 
   // To avoid large weight values in the structures (to further decrease the unlikely chance of overflowing values)
-  fav_artists = normalizeItemWeights(fav_artists);
-  fav_genres = normalizeItemWeights(fav_genres);
+  // No need to normalize spotify sync results as overflow is extremely unlikely
+  if (type === "muse") {
+    fav_artists = normalizeItemWeights(fav_artists);
+    fav_genres = normalizeItemWeights(fav_genres);
+  }
 
   return { artists_pref: fav_artists, genres_pref: fav_genres };
 }
@@ -242,7 +245,7 @@ module.exports = {
       updated_fav_genres = {};
     }
 
-    prefs = await updateArtistAndGenrePreferences(access_token, artist_ids, updated_fav_artists, updated_fav_genres);
+    prefs = await updateArtistAndGenrePreferences(access_token, artist_ids, updated_fav_artists, updated_fav_genres, type);
     if (prefs.error) return prefs;
 
     var updated_user_entity = {
